@@ -1,0 +1,10 @@
+{
+  "name": "tools-bootstrap",
+  "private": true,
+  "scripts": {
+    "graph": "nx show project tools-bootstrap"
+  },
+  "devDependencies": {
+    "nx": "catalog:tooling"
+  }
+}

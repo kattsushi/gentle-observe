@@ -1,0 +1,52 @@
+schema: spec-driven
+
+context: |
+  Project: gentle-observe.
+  Current state: documentation/bootstrap-heavy; no product source or root package manifest exists.
+  Planned stack: Nx/Bun monorepo, TypeScript 7, Effect 4 RC, SolidJS, OpenTUI; Termcn optional after spike.
+  Initial integrations: Pi runtime and recognized, version-compatible, observable non-RDD Gentle AI activity; RDD excluded.
+  Product constraints: metadata-only, local, read-only observation; preserve existing pre-SDD docs.
+  Delivery: functional, independently verifiable, reversible work units; tests/docs travel with deliverables.
+  Branch: master. Do not alter remotes, .repos, dependencies, or product code during initialization.
+
+testing:
+  strict_tdd: false
+  rationale: No root test runner or product source exists yet; strict TDD will be revisited when the first operational deliverable establishes a runner.
+  runner:
+    command: ""
+    framework: ""
+  layers:
+    unit: false
+    integration: false
+    e2e: false
+  coverage:
+    available: false
+    command: ""
+  quality:
+    linter: false
+    type_checker: false
+    formatter: false
+
+rules:
+  proposal:
+    - Preserve the pre-SDD research, PRD, and TUI wireframe artifacts unless an explicit change requires updates.
+    - Include rollback plans for risky changes.
+  specs:
+    - Use Given/When/Then scenarios and RFC 2119 keywords.
+    - Keep Pi and non-RDD Gentle AI scope explicit; RDD is excluded.
+  design:
+    - Record architecture decisions and rationale.
+    - Validate Termcn only through a spike before making it required.
+  tasks:
+    - Group tasks by functional work unit, not by file type or layer.
+    - Every work unit must be independently verifiable and reversible; keep tests and docs with it.
+    - Respect the 800-line review budget and ask before high-risk slicing decisions.
+  apply:
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas.
