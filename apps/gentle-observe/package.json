@@ -1,0 +1,29 @@
+{
+  "name": "app-tui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "sh scripts/verify-bun.sh && tsc --noEmit -p tsconfig.json",
+    "test": "sh scripts/verify-bun.sh && bun test test"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "bun-types": "catalog:tooling",
+    "typescript": "catalog:tooling"
+  },
+  "nx": {
+    "projectType": "application",
+    "targets": {
+      "test": {
+        "cache": true
+      },
+      "typecheck": {
+        "cache": true
+      }
+    }
+  }
+}
