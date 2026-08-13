@@ -1,6 +1,4 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "plugins": [
-    "nx/plugins/package-json"
-  ]
+  "plugins": ["nx/plugins/package-json"]
 }

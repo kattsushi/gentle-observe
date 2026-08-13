@@ -1,69 +1,68 @@
 # Apply Progress: Bootstrap Workspace Toolchain
 
-## Work Unit 1: Reproducible workspace graph
+## Authority and delivery
 
-**Mode:** Standard (Strict TDD is disabled for this bootstrap change.)
-**Delivery:** `exception-ok`; maintainer-approved `size:exception`.
-**Native runtime authority:** acquire state `proceed`; settlement remains with parent.
+- **State:** repository-local review-tool integrations removed.
+- **Proceed token:** retained by parent as
+  `sha256:acd9048175b6c44df5e61b3a08235ec81504cde4de97ca685e73cab3a0803e7b`.
+- **Work unit:** `remove-repository-crit-integrations`.
+- **Delivery:** one writer, no commit or push; maximum 2,400 changed lines.
+- **Mode:** Standard. Strict TDD remains deferred because no durable,
+  non-vacuous test-bearing project exists.
 
-### Completed Tasks
+## Cumulative state
 
-- [x] 1.1 Root Bun/Nx manifests, workspace globs, exact catalogs, and bootstrap project metadata.
-- [x] 1.2 Reviewed `bun.lock` generated from the exact compatibility matrix, including catalog definitions and resolved versions, without substitutions.
-- [x] 1.3 Documented fresh-clone graph and catalog inspection and proved frozen install, catalog/pin resolution, and discovery.
+- [x] Unit 1 root graph baseline: exact catalogs, lockfile, and root Nx
+      discovery are preserved.
+- [x] Unit 2 Nx-first quality loop: direct root Oxfmt/Oxlint targets,
+      versioned `.atl/` outside Oxfmt, and no vacuous zero-input targets.
+- [x] Unit 2.5 repository-local review-tool integration removal: all local
+      skills, commands, rules, plugins, and registrations are removed; the
+      versioned skill registry is regenerated without integration rows.
+- [ ] Unit 3 narrow host bootstrap.
+- [ ] Unit 4 official Nx CI selection and future project-target reassessment.
 
-### Human-Review Correction
+## Review history
 
-tuicr requested centralized cross-package dependency management at
-`package.json:8`. The approved correction adopts official Bun workspace
-catalogs without reopening Work Unit 1: the root workspace now has exact
-default runtime and named tooling/quality catalogs; root-only orchestration
-tools remain directly exact-pinned because the root owns those entries; and
-`tools/bootstrap` consumes `nx` as `catalog:tooling` to prove the policy. No
-product dependency was added solely for demonstration.
+The first human review replaced the rejected Biome/custom-report candidate with
+direct root Nx ownership. The second human review found that the remaining
+`tsconfig.quality.json` (`files: []`), TypeScript command, and Effect diagnostics
+command had no durable input and could only provide vacuous passes. This
+correction deletes the empty configuration and removes root `typecheck` and
+`diagnostics` scripts/targets. TypeScript 7, Effect, and `@effect/tsgo` remain
+exactly pinned for future project-owned targets; they are not current runtime
+validation.
 
-The design, specification, task checklist, lockfile, and graph documentation
-were reconciled so catalog-backed consumption is an observable requirement.
+`.atl/` remains versioned project state. Oxfmt retains `.oxfmtignore` with only
+`.atl/`, so the registry is not rewritten while all other compatible tracked
+files are formatter scope. The registry was regenerated after removing every
+project-local skill copy for the removed integration: it now indexes 19
+user-level skills, has no removed-integration rows, and has cache fingerprint
+`a7cc6c1cdbb2f3145962395fd13834bc389efc48`.
 
-### Exact Files
+The repository no longer contains the integration's agent marketplace entries,
+skills, commands, rules, Gemini hooks, OpenCode plugin registration, or plugin
+package. `opencode.jsonc` was solely that plugin registration and was removed.
+Generic product/review terminology, RDD/Judgment Day concepts, review budgets,
+and unrelated critical/criteria language remain outside this removal boundary.
 
-- `.gitignore`
-- `package.json`
-- `bun.lock`
-- `bunfig.toml`
-- `nx.json`
-- `tsconfig.base.json`
-- `tools/bootstrap/package.json`
-- `tools/bootstrap/tsconfig.json`
-- `docs/development/workspace-graph.md`
-- `openspec/changes/bootstrap-workspace-toolchain/design.md`
-- `openspec/changes/bootstrap-workspace-toolchain/specs/workspace-toolchain/spec.md`
-- `openspec/changes/bootstrap-workspace-toolchain/tasks.md`
-- `openspec/changes/bootstrap-workspace-toolchain/apply-progress.md`
+## Work Unit Evidence
 
-### Work Unit Evidence
+| Evidence            | Exact result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Focused command     | `bun install --frozen-lockfile` under host Bun 1.3.11 exited 0 (`Checked 150 installs across 228 packages (no changes)`) with unchanged `bun.lock` SHA-256 `5694f00344a495bda3c62a5bbde041c043626ca3911d9a9e76bf8c13ed9ec666`. `.atl/skill-registry.md` and `.atl/.skill-registry.cache.json` are not ignored; `.oxfmtignore` is exactly `.atl/`; `bun nx show projects --json` returned `["gentle-observe"]`; target discovery reported only `format`, `format-write`, and `lint` plus script metadata. |
+| Formatting safety   | `bun x --no-install oxfmt . --ignore-path .oxfmtignore` performed the single required source-mutating normalization on 49 files. Two later `bun x --no-install oxfmt --check . --ignore-path .oxfmtignore` runs passed and preserved the same candidate SHA-256 `aeee8e6335e43cbb4aa52191a072b1c31f2d9da74a8d818fb3c2dfbefcc1db2c`.                                                                                                                                                                      |
+| Runtime harness     | `bun run format` and `bun run lint` exited 0 independently. Two consecutive `bun run check` executions exited 0 with native Nx `run-many`; each reported `2/2 hit (100%)` cache reuse for format and lint. `bun run affected:check --base=HEAD --head=HEAD` exited 0 with `NX No tasks were run`.                                                                                                                                                                                                        |
+| Failure attribution | A bounded temporary replacement of only the `lint` command with `sh -c "exit 23"` made `bun run check` exit 1 and report `- gentle-observe:lint`; the exact `package.json` SHA-256 `61b0d5f16e01d06e1ca8b703e78a330801e0771dd8e4601af74c945a095106d8` was restored, then lint and aggregate checks passed.                                                                                                                                                                                               |
+| Rollback boundary   | Revert `.gitignore`, `.oxfmtignore`, `package.json`, the deletion of `tsconfig.quality.json`, `.oxlintrc.json`, documentation, and reconciled SDD artifacts together. This removes only the current root quality boundary.                                                                                                                                                                                                                                                                               |
 
-| Evidence | Exact result |
-|---|---|
-| Focused verification | `/tmp/gentle-observe-bun-1.3.14/bun-linux-x64/bun install --frozen-lockfile` exited `0`; checked `149` installs across `210` packages with no changes. A second frozen install produced the same lock SHA-256 before/after: `473e6b063ab1068ddb3eecdb07d332d4ad208d63e9baf15a6dbb42798794ad5d`. |
-| Exact pin and catalog validation | Bun 1.3.14 evaluated the root/default and named catalogs, `tools/bootstrap` `nx: catalog:tooling`, and `bun.lock` catalog/catalogs sections; it exited `0` with `catalog policy: exact root catalog + named catalogs; tools-bootstrap nx=catalog:tooling; lockfile records both catalog sections`. |
-| Graph inspection | `/tmp/gentle-observe-bun-1.3.14/bun-linux-x64/bun nx show projects --json` exited `0` and returned `["tools-bootstrap"]`; `nx show project tools-bootstrap --json` reported root `tools/bootstrap` and target `graph`. |
-| Runtime harness | Frozen install plus Nx graph discovery is the runtime integration boundary for this graph-only unit; both commands exited `0`. No bootstrap command, quality loop, report, or CI behavior was implemented. |
-| Rollback boundary | Revert the root manifests/configuration and `bun.lock`, `tools/bootstrap/package.json`, graph documentation, and this unit's SDD artifacts. This removes only catalog-backed workspace discovery and dependency graph behavior. |
+## Work Unit Evidence: repository-local integration removal
 
-### Compatibility Review
+| Evidence          | Exact result                                                                                                                                                                                                                                                         |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Focused command   | The exact removed-integration path scan over `git ls-files -co --exclude-standard` returned zero matches after the deleted paths were staged; tracked candidate reference scanning also returned zero matches.                                                       |
+| Runtime harness   | N/A: deleted configuration assets have no runtime boundary. The remaining root quality commands are run separately; OpenCode startup configuration has no project file because it was exclusively the removed plugin registration.                                   |
+| Rollback boundary | Restore only the deleted local agent assets, the removed plugin package, `opencode.jsonc`, `.aider.conf.yml`, `.atl/skill-registry.md`, `.atl/.skill-registry.cache.json`, and this current-state evidence. Generic product review content is outside this boundary. |
 
-- The root catalog records `effect@4.0.0-rc.108`; named `tooling` records `bun-types@1.3.14`, `nx@23.1.1`, and `typescript@7.0.2`; named `quality` records `@biomejs/biome@2.5.8`, `@effect/tsgo@0.36.4`, and `oxlint@1.78.0`. `bun.lock` preserves the catalog definitions and resolved exact versions.
-- No fallback version was selected. `tsgolint@7.0.2001` is not published in npm; it was intentionally left out because the design forbids substituting incompatible tooling. Its later diagnostics target remains a blocked design dependency until the approved source is clarified.
-
-### Scope and Delivery
-
-- Human-review correction delta: 122 authored additions + deletions (97 additions, 25 deletions) across implementation and directly affected SDD artifacts; 60 lines are implementation/lockfile changes. This is within the 140-line correction budget and excludes the pre-existing staged baseline.
-- No product apps, UI/domain/connectors, bootstrap/report behavior, quality/test loop, CI, `.repos/`, branch, remote, PRD, research, or wireframes were modified.
-- No commit or push was performed. Existing baseline files remain staged; the catalog correction remains unstaged/untracked with the Work Unit 1 candidate.
-
-### Remaining Tasks
-
-- [ ] 2.1–2.3 Deterministic quality and test feedback loop.
-- [ ] 3.1–3.3 Safe one-command bootstrap and structured reporting.
-- [ ] 4.1–4.3 Native CI evidence and Strict TDD activation.
+No CI YAML, Nx Cloud configuration, product code, `.repos`, branch/remote, PRD,
+research, wireframe, commit, or push changes are part of this correction.

@@ -1,6 +1,4 @@
 /.repos/
 node_modules/
 /.nx/
-
-# SDD and skill registry artifacts
-.atl/
+# Local AI runtime state
