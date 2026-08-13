@@ -6,6 +6,7 @@ Last updated: 2026-08-13
 
 ## Sources scanned
 
+- .agents/skills
 - /home/andresdavid/.pi/agent/skills
 - /home/andresdavid/.agents/skills
 - /home/andresdavid/.config/opencode/skills
@@ -27,6 +28,7 @@ Last updated: 2026-08-13
 | `chained-pr` | Trigger: PRs over 400 lines, stacked PRs, review slices. Split oversized changes into chained PRs that protect review focus. | user | `/home/andresdavid/.agents/skills/chained-pr/SKILL.md` |
 | `cognitive-doc-design` | Design docs that reduce cognitive load. Trigger: writing guides, READMEs, RFCs, onboarding, architecture, or review-facing docs. | user | `/home/andresdavid/.agents/skills/cognitive-doc-design/SKILL.md` |
 | `comment-writer` | Write warm, direct collaboration comments. Trigger: PR feedback, issue replies, reviews, Slack messages, or GitHub comments. | user | `/home/andresdavid/.agents/skills/comment-writer/SKILL.md` |
+| `effect` | Opinionated guide for building production TypeScript applications with Effect v4. Use when implementing Effect workflows, services, layers, schemas, configuration, schedules, caches, streams, HTTP clients, or tests. | project | `/home/andresdavid/devx-ops/gentle-observe/.agents/skills/effect/SKILL.md` |
 | `find-skills` | Helps users discover and install agent skills when they ask questions like "how do I do X", "find a skill for X", "is there a skill that can...", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill. | user | `/home/andresdavid/.pi/agent/skills/find-skills/SKILL.md` |
 | `gentle-ai-bench` | Trigger: bench, journey, journeys, driven mode, gentle-ai-bench, journey corpus, j-numbers, bench axis. Author and verify gentle-ai bench journeys; go test ./bench never proves driven execution. | user | `/home/andresdavid/.agents/skills/gentle-ai-bench/SKILL.md` |
 | `go-testing` | Trigger: Go tests, go test coverage, Bubbletea teatest, golden files. Apply focused Go testing patterns. | user | `/home/andresdavid/.agents/skills/go-testing/SKILL.md` |
@@ -34,6 +36,7 @@ Last updated: 2026-08-13
 | `hunk-review` | Interacts with live Hunk diff review sessions via CLI. Inspects review focus, navigates files and hunks, reloads session contents, and adds inline review comments. Use when the user has a Hunk session running or wants to review diffs interactively. | user | `/home/andresdavid/.pi/agent/skills/hunk-review/SKILL.md` |
 | `issue-creation` | Create and triage GitHub issues from repository evidence. Trigger: issue creation, bug reports, feature requests, or issue approval. | user | `/home/andresdavid/.agents/skills/issue-creation/SKILL.md` |
 | `judgment-day` | Trigger: judgment day, dual review, adversarial review, juzgar. Run explicit blind dual review with at most two scoped fix/re-judgment rounds. | user | `/home/andresdavid/.agents/skills/judgment-day/SKILL.md` |
+| `nx-run-tasks` | Helps with running tasks in an Nx workspace. USE WHEN the user wants to execute build, test, lint, serve, or run any other tasks defined in the workspace. | project | `/home/andresdavid/devx-ops/gentle-observe/.agents/skills/nx-run-tasks/SKILL.md` |
 | `omarchy` | REQUIRED for end-user customization of Linux desktop, window manager, or system config. Use when editing ~/.config/hypr/, ~/.config/waybar/, ~/.config/walker/, ~/.config/alacritty/, ~/.config/foot/, ~/.config/kitty/, ~/.config/ghostty/, ~/.config/mako/, or ~/.config/omarchy/. Triggers: Hyprland, window rules, animations, keybindings, monitors, gaps, borders, blur, opacity, waybar, walker, terminal config, themes, wallpaper, night light, idle, lock screen, screenshots, reminders, layer rules, workspace settings, display config, and user-facing omarchy commands. Excludes Omarchy source development in ~/.local/share/omarchy/ and `omarchy dev` workflows. | user | `/home/andresdavid/.pi/agent/skills/omarchy/SKILL.md` |
 | `rdd-defect-workflow` | Trigger: RDD, receipt-driven development, review authority, receipt/lineage, correction/recovery, delivery gate/kill switch, bounded review defects. Guide work. | user | `/home/andresdavid/.agents/skills/rdd-defect-workflow/SKILL.md` |
 | `rvi-vendor-request-wizard-debugger` | Debug and navigate the RVI Vendor Request Form Wizard automatically using Chrome DevTools MCP. Trigger: When debugging RVI vendor request wizard issues, testing wizard flows, investigating navigation or validation problems, or completing UC6 test scenarios. | user | `/home/andresdavid/.config/opencode/skills/rvi-vendor-request-wizard-debugger/SKILL.md` |
