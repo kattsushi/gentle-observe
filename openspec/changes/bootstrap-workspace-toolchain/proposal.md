@@ -31,8 +31,8 @@ an exact dependency baseline and a non-vacuous quality feedback loop.
       demonstrates Nx cache reuse.
 - [x] Check-only formatting preserves candidate bytes and an induced target
       failure receives native Nx attribution.
-- [ ] Unit 3 validates the host and performs frozen/offline installation before
-      invoking root Nx checks.
+- [x] Unit 3 validates the host, performs frozen installation online, and uses
+      a fail-closed no-network preflight for offline mode before any Nx checks.
 - [ ] Unit 4 selects currently existing targets with `nrwl/nx-set-shas` and
       `nx affected`.
 

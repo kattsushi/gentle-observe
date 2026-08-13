@@ -98,11 +98,14 @@ after Nx discovers a durable owner.
 ### Requirement: Deferred host and CI integration
 
 Unit 3 MAY add a narrow host bootstrap that validates exact Bun, performs frozen
-or offline installation, performs justified preparation, and invokes root Nx
-checks. Unit 4 MAY use `nrwl/nx-set-shas` followed by `nx affected -t
-format,lint` for CI target selection. It MUST add typecheck, diagnostics, or
-test only after projects own durable targets. Nx Cloud is optional and is not
-configured by this change.
+installation online, and invokes root Nx checks. Because Bun 1.3.14 lacks an
+install mode that proves network isolation, offline mode MUST be a fail-closed
+preflight that does not invoke Bun's package manager or Nx. Active installation
+and check children MUST receive forwarded `HUP`, `INT`, and `TERM` signals and
+be reaped before the parent exits. Unit 4 MAY use `nrwl/nx-set-shas` followed by
+`nx affected -t format,lint` for CI target selection. It MUST add typecheck,
+diagnostics, or test only after projects own durable targets. Nx Cloud is
+optional and is not configured by this change.
 
 ### Requirement: Strict TDD handoff
 

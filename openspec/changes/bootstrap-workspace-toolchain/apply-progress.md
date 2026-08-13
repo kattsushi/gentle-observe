@@ -4,9 +4,11 @@
 
 - **State:** repository-local review-tool integrations removed.
 - **Proceed token:** retained by parent as
-  `sha256:acd9048175b6c44df5e61b3a08235ec81504cde4de97ca685e73cab3a0803e7b`.
-- **Work unit:** `remove-repository-crit-integrations`.
-- **Delivery:** one writer, no commit or push; maximum 2,400 changed lines.
+  `sha256:84e6422b97e1e9e9a986dce57e558c1b4ffcbac9ebbf03cbc4d1dc1b4d339260`.
+- **Work unit:** `exact-bun-bootstrap-network-signal-fix`.
+- **Delivery:** `exception-ok / size:exception` is accepted for the overall
+  SDD change; this autonomous slice is below 400 authored changed lines. No
+  commit or push.
 - **Mode:** Standard. Strict TDD remains deferred because no durable,
   non-vacuous test-bearing project exists.
 
@@ -19,7 +21,9 @@
 - [x] Unit 2.5 repository-local review-tool integration removal: all local
       skills, commands, rules, plugins, and registrations are removed; the
       versioned skill registry is regenerated without integration rows.
-- [ ] Unit 3 narrow host bootstrap.
+- [x] Unit 3 narrow host bootstrap: POSIX exact-Bun validation, frozen online
+      installation, fail-closed no-network offline preflight, signal-forwarded
+      child reaping, behavior tests, and host documentation.
 - [ ] Unit 4 official Nx CI selection and future project-target reassessment.
 
 ## Review history
@@ -66,3 +70,34 @@ and unrelated critical/criteria language remain outside this removal boundary.
 
 No CI YAML, Nx Cloud configuration, product code, `.repos`, branch/remote, PRD,
 research, wireframe, commit, or push changes are part of this correction.
+
+## Remediation history: exact Bun host bootstrap
+
+The prior attempt used Bun's loopback `--registry` as an alleged offline
+install. Binding validation rejected that claim: Bun 1.3.14 honors proxy
+variables and `install.prefer = "offline"` still attempted absolute tarball
+URLs when an isolated cache was incomplete. A local hostile proxy captured
+`CONNECT registry.npmjs.org:443`; the prior parent process also left the active
+`bun install` child alive after `TERM`. This is remediation attempt 2 of 2 and
+replaces that unsafe behavior without touching dependencies or Unit 4.
+
+## Remediation runtime context
+
+| Field                     | Value                                                                                              |
+| ------------------------- | -------------------------------------------------------------------------------------------------- |
+| Objective generation      | 12                                                                                                 |
+| Failed evidence revision  | `sha256:02b7f9757b2f5d4fffa24fbfe9c176c8d0483c0e621c679f582525eff0bbf0c7`                          |
+| Prior failed attempt      | 1 of 2: `exact-bun-host-bootstrap`                                                                 |
+| Active correction attempt | 2 of 2: `exact-bun-bootstrap-network-signal-fix`                                                   |
+| Current scoped diff       | 369 authored additions plus deletions from the remediation start tree, within the 400-line maximum |
+| Settlement                | Not performed: the parent retains runtime settlement authority.                                    |
+
+## Work Unit Evidence: exact Bun bootstrap network and signal correction
+
+| Evidence             | Exact result                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Focused test command | `sh scripts/bootstrap.test` exited 0: 12 behavior scenarios passed, preserving the original nine and adding missing-offline-preflight, hostile proxy capture, and real parent/child `TERM` behavior.                                                                                                                                                                                                                |
+| Runtime harness      | `mise exec bun@1.3.14 -- sh scripts/bootstrap` passed frozen install plus Nx check. The same command with `--offline` exited 0 only after `node_modules` preflight and started neither Bun install nor Nx. The hostile-proxy capture server received zero requests under every common proxy variable. A real shell process received `TERM`, forwarded it to its blocking Bun child, reaped it, and exited 143.      |
+| Quality commands     | Exact Bun 1.3.14: `bun run check` and `git diff --check` exited 0. `shellcheck` is unavailable on this host; `/bin/sh` syntax checks passed for both scripts.                                                                                                                                                                                                                                                       |
+| Implementation       | `scripts/bootstrap` supports `--help` and `--offline`, accepts Linux/macOS only, derives Bun from `packageManager`, requires an exact matching `engines.bun`, tracks online install/check children, forwards `HUP`/`INT`/`TERM`, and reaps them. Bun 1.3.14 lacks a trustworthy offline install guarantee, so offline mode is an honest fail-closed `node_modules` preflight that invokes no network-capable child. |
+| Rollback boundary    | Delete `scripts/bootstrap`, `scripts/bootstrap.test`, and the Host bootstrap section in `docs/development/workspace-graph.md`; no dependency, Nx target, CI, product, or repository-state behavior is coupled.                                                                                                                                                                                                      |

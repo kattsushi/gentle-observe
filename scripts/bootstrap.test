@@ -1,0 +1,126 @@
+#!/bin/sh
+
+set -eu
+
+ROOT=$(CDPATH= cd -P "$(dirname "$0")/.." && pwd)
+BOOTSTRAP_SCRIPT=${BOOTSTRAP_SCRIPT:-"$ROOT/scripts/bootstrap"}
+REAL_PATH=$PATH
+FIXTURE_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/bootstrap-test.XXXXXX")
+trap 'rm -rf "$FIXTURE_ROOT"' EXIT HUP INT TERM
+
+fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+assert_status() { [ "$2" -eq "$1" ] || fail "expected status $1, got $2"; }
+assert_log() { actual=$(cat "$LOG" 2>/dev/null || true); [ "$actual" = "$1" ] || fail "unexpected command log:\n$actual"; }
+
+make_fixture() {
+  CASE_ROOT="$FIXTURE_ROOT/$1 workspace"
+  mkdir -p "$CASE_ROOT/scripts" "$CASE_ROOT/bin"
+  cp "$BOOTSTRAP_SCRIPT" "$CASE_ROOT/scripts/bootstrap"
+  cat >"$CASE_ROOT/package.json" <<'EOF'
+{
+  "packageManager": "bun@1.3.14",
+  "engines": {
+    "bun": "1.3.14"
+  }
+}
+EOF
+  : >"$CASE_ROOT/bun.lock"; LOG="$CASE_ROOT/commands.log"; export LOG
+  cat >"$CASE_ROOT/bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "${FAKE_OS:-Linux}"
+EOF
+  cat >"$CASE_ROOT/bin/bun" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$*" >>"$LOG"
+[ "${1:-}" = --version ] && { printf '%s\n' "${FAKE_BUN_VERSION:-1.3.14}"; exit 0; }
+[ "${1:-}" = install ] && exit "${FAKE_INSTALL_EXIT:-0}"
+[ "${1:-}" = run ] && exit "${FAKE_CHECK_EXIT:-0}"
+exit 99
+EOF
+  chmod +x "$CASE_ROOT/bin/uname" "$CASE_ROOT/bin/bun"
+}
+
+run_bootstrap() {
+  set +e; PATH="$CASE_ROOT/bin:$REAL_PATH" sh "$CASE_ROOT/scripts/bootstrap" "$@" >"$CASE_ROOT/stdout" 2>"$CASE_ROOT/stderr"; status=$?; set -e
+}
+
+run_real_bootstrap() {
+  set +e
+  if [ "$(bun --version)" = 1.3.14 ]; then
+    PATH="$REAL_PATH" sh "$CASE_ROOT/scripts/bootstrap" "$@" >"$CASE_ROOT/stdout" 2>"$CASE_ROOT/stderr"
+  else
+    command -v mise >/dev/null 2>&1 || fail "Bun 1.3.14 or mise is required for the network test"
+    PATH="$REAL_PATH" mise exec bun@1.3.14 -- sh "$CASE_ROOT/scripts/bootstrap" "$@" >"$CASE_ROOT/stdout" 2>"$CASE_ROOT/stderr"
+  fi
+  status=$?; set -e
+}
+
+start_capture() {
+  command -v python3 >/dev/null 2>&1 || fail "python3 is required for the proxy capture test"
+  PORT_FILE="$CASE_ROOT/capture.port"; REQUEST_FILE="$CASE_ROOT/capture.requests"
+  python3 -u - "$PORT_FILE" "$REQUEST_FILE" <<'PY' &
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+import sys
+class Capture(BaseHTTPRequestHandler):
+    def do_CONNECT(self): self.record()
+    def do_GET(self): self.record()
+    def do_POST(self): self.record()
+    def record(self):
+        Path(sys.argv[2]).write_text(self.command + " " + self.path + "\n")
+        self.send_response(502); self.end_headers()
+    def log_message(self, *_): pass
+server = HTTPServer(("127.0.0.1", 0), Capture)
+Path(sys.argv[1]).write_text(str(server.server_port))
+server.serve_forever()
+PY
+  CAPTURE_PID=$!
+  tries=0; while [ ! -s "$PORT_FILE" ] && [ "$tries" -lt 50 ]; do sleep 0.02; tries=$((tries + 1)); done
+  [ -s "$PORT_FILE" ] || fail "capture server did not start"
+}
+
+stop_capture() { kill "$CAPTURE_PID" 2>/dev/null || true; wait "$CAPTURE_PID" 2>/dev/null || true; }
+
+make_fixture help; run_bootstrap --help; assert_status 0 "$status"
+make_fixture unsupported-os; FAKE_OS=FreeBSD run_bootstrap; assert_status 65 "$status"; assert_log ''
+make_fixture wrong-bun; FAKE_BUN_VERSION=1.3.11 run_bootstrap; assert_status 67 "$status"; assert_log '--version'
+make_fixture non-exact-manifest
+printf '%s\n' '{"packageManager":"bun@^1.3.14","engines":{"bun":"1.3.14"}}' >"$CASE_ROOT/package.json"
+run_bootstrap; assert_status 66 "$status"; assert_log ''
+make_fixture inconsistent-manifest
+printf '%s\n' '{"packageManager":"bun@1.3.14","engines":{"bun":"1.3.13"}}' >"$CASE_ROOT/package.json"
+run_bootstrap; assert_status 66 "$status"; assert_log ''
+make_fixture normal; run_bootstrap; assert_status 0 "$status"; assert_log '--version
+install --frozen-lockfile
+run check'
+make_fixture offline; mkdir "$CASE_ROOT/node_modules"; run_bootstrap --offline; assert_status 0 "$status"; assert_log '--version'
+make_fixture offline-missing; run_bootstrap --offline; assert_status 68 "$status"; assert_log '--version'
+make_fixture install-failure; FAKE_INSTALL_EXIT=41 run_bootstrap; assert_status 41 "$status"
+make_fixture check-failure; FAKE_CHECK_EXIT=43 run_bootstrap; assert_status 43 "$status"
+make_fixture repeated-runs; run_bootstrap; assert_status 0 "$status"; run_bootstrap; assert_status 0 "$status"
+
+make_fixture hostile-proxy; mkdir "$CASE_ROOT/node_modules"
+start_capture; proxy="http://127.0.0.1:$(cat "$PORT_FILE")"
+http_proxy=$proxy HTTP_PROXY=$proxy https_proxy=$proxy HTTPS_PROXY=$proxy all_proxy=$proxy ALL_PROXY=$proxy no_proxy= NO_PROXY= run_real_bootstrap --offline
+stop_capture; assert_status 0 "$status"; [ ! -s "$REQUEST_FILE" ] || fail "offline bootstrap contacted hostile proxy"
+
+make_fixture signal
+cat >"$CASE_ROOT/bin/bun" <<'EOF'
+#!/bin/sh
+[ "${1:-}" = --version ] && { printf '%s\n' 1.3.14; exit 0; }
+if [ "${1:-}" = install ]; then
+  printf '%s\n' "$$" >"$CHILD_PID_FILE"
+  trap 'printf terminated >"$CHILD_STATE_FILE"; exit 0' HUP INT TERM
+  while :; do sleep 1; done
+fi
+exit 99
+EOF
+chmod +x "$CASE_ROOT/bin/bun"; CHILD_PID_FILE="$CASE_ROOT/child.pid"; CHILD_STATE_FILE="$CASE_ROOT/child.state"; export CHILD_PID_FILE CHILD_STATE_FILE
+PATH="$CASE_ROOT/bin:$REAL_PATH" sh "$CASE_ROOT/scripts/bootstrap" >"$CASE_ROOT/stdout" 2>"$CASE_ROOT/stderr" & parent=$!
+tries=0; while [ ! -s "$CHILD_PID_FILE" ] && [ "$tries" -lt 50 ]; do sleep 0.02; tries=$((tries + 1)); done
+[ -s "$CHILD_PID_FILE" ] || fail "install child did not start"; child=$(cat "$CHILD_PID_FILE"); kill -TERM "$parent"
+set +e; wait "$parent"; status=$?; set -e
+assert_status 143 "$status"; [ -f "$CHILD_STATE_FILE" ] || fail "TERM was not forwarded to install child"
+kill -0 "$child" 2>/dev/null && fail "install child survived parent TERM"
+
+printf 'PASS: 12 bootstrap behavior scenarios\n'

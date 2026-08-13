@@ -4,19 +4,20 @@
 
 | Field                   | Value                                  |
 | ----------------------- | -------------------------------------- |
-| Estimated changed lines | 2,400 maximum for the approved removal |
+| Estimated changed lines | 400 maximum for the current slice      |
 | 400-line budget risk    | High                                   |
 | Chained PRs recommended | No                                     |
 | Delivery strategy       | exception-ok / size:exception          |
-| Current work unit       | remove-repository-crit-integrations    |
+| Current work unit       | exact-bun-bootstrap-network-signal-fix |
 
 Decision needed before apply: No
 Chained PRs recommended: No
 Chain strategy: pending
 400-line budget risk: High
 
-The maintainer authorized this one removal as `size:exception`, capped at 2,400
-changed lines. No commit or push is part of this work unit.
+The maintainer accepted `size:exception` for the overall change. This
+`exact-bun-bootstrap-network-signal-fix` remediation is capped at 400 cumulative
+authored changed lines. No commit or push is part of this work unit.
 
 ## Unit 1: Root graph baseline
 
@@ -39,10 +40,12 @@ changed lines. No commit or push is part of this work unit.
 
 ## Unit 3: Narrow host bootstrap
 
-- [ ] 3.1 Validate exact Bun and perform frozen or offline installation.
-- [ ] 3.2 Perform only justified preparation, then invoke root Nx checks.
-- [ ] 3.3 Prove host and install failures without adding a custom runner,
-      report, or project.
+- [x] 3.1 Validate exact Bun and perform frozen installation online or a
+      fail-closed no-network offline preflight.
+- [x] 3.2 Perform only justified preparation, then invoke root Nx checks for
+      online bootstrap and reap forwarded-signal children.
+- [x] 3.3 Prove host/install failures, hostile-proxy no-request offline mode,
+      and child termination without adding a custom runner, report, or project.
 
 ## Unit 4: Official Nx CI selection
 
@@ -54,8 +57,8 @@ changed lines. No commit or push is part of this work unit.
 
 ## Work Unit Evidence
 
-| Evidence        | Required result                                                             |
-| --------------- | --------------------------------------------------------------------------- |
-| Focused command | Integration-path, registry, config, and formatter checks exit successfully. |
-| Runtime harness | Two `check` runs demonstrate native Nx execution and cache reuse.           |
-| Rollback        | Restore only deleted integration assets, registry state, and SDD evidence.  |
+| Evidence        | Required result                                                                                                                                    |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Focused command | `sh scripts/bootstrap.test` exits 0: 12 behavior scenarios, including hostile-proxy capture and real parent/child TERM handling.                   |
+| Runtime harness | Exact Bun 1.3.14 passes normal/frozen bootstrap; offline preflight exits 0 only with existing `node_modules` and invokes no network-capable child. |
+| Rollback        | Delete `scripts/bootstrap`, `scripts/bootstrap.test`, and the host-bootstrap documentation section.                                                |

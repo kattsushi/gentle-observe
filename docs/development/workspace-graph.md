@@ -12,6 +12,35 @@ bun run format       # Oxfmt check-only
 bun run check        # Nx run-many across all quality targets
 ```
 
+## Host bootstrap
+
+Run `scripts/bootstrap` from any directory to validate a Linux or macOS host,
+validate the exact Bun version declared by both `packageManager` and
+`engines.bun`, install the frozen lockfile, and delegate quality to one
+`bun run check` invocation:
+
+```sh
+scripts/bootstrap
+scripts/bootstrap --offline
+```
+
+The script does not download Bun or alter the manifest/lockfile. Install the
+repository-pinned Bun through an approved host mechanism before running it.
+Bun 1.3.14 has no install option that can prove an offline install cannot use a
+proxy or absolute lockfile URL. Therefore `--offline` is intentionally
+fail-closed: after host and manifest validation, it only verifies that the
+existing `node_modules` tree is present and exits without invoking Bun's package
+manager or Nx. This preflight makes no network-capable subprocess call. Run
+`scripts/bootstrap` online to perform the frozen install and quality check.
+
+The online install and check run as tracked child processes. `HUP`, `INT`, and
+`TERM` are forwarded to the active child, which is reaped before the script
+exits with the corresponding stable signal status. A Bun-version, manifest,
+host, or install failure stops before quality checks; an Nx failure retains its
+native nonzero status. Re-running the online command repeats the frozen install
+and root Nx check without creating repository-local state. Roll it back by
+deleting `scripts/bootstrap`, its behavior test, and this section.
+
 `format` uses `oxfmt --check` and never writes source. Use `bun run
 format:write` for an intentional rewrite. `.oxfmtignore` excludes only the
 versioned `.atl/` registry state; every other Oxfmt-compatible tracked file is
@@ -34,10 +63,10 @@ currently discovered `format` and `lint` targets. Add `typecheck`,
 `diagnostics`, or `test` to affected selection only when a project owns the
 corresponding durable target. Nx Cloud is not configured or required.
 
-`scripts/bootstrap`, when introduced in Work Unit 3, is host setup only:
-validate exact Bun, perform frozen/offline install, make justified preparation,
-then invoke these root Nx commands. It is not an Nx package, quality runner, or
-CI adapter.
+`scripts/bootstrap` is host setup only: validate exact Bun, perform frozen
+installation online or the fail-closed offline preflight, then invoke these root
+Nx commands only for the online path. It is not an Nx package, quality runner,
+or CI adapter.
 
 ## Catalogs and rollback
 

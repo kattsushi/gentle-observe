@@ -56,10 +56,13 @@ non-vacuous runner evidence.
 
 ### Unit 3: Narrow host bootstrap
 
-`scripts/bootstrap`, when introduced, is limited to validating the exact Bun
-host, running frozen or offline installation, performing justified preparation,
-and invoking root Nx checks. It is not a package, target owner, custom runner,
-or reporting layer.
+`scripts/bootstrap` validates the exact Bun host, runs a frozen installation
+and root Nx checks online, and uses a fail-closed offline preflight that does
+not start Bun's package manager or Nx. Bun 1.3.14 has no install option that
+proves network isolation across proxy variables and absolute lockfile URLs, so
+the script does not claim an offline install. It tracks each online child and
+forwards `HUP`, `INT`, and `TERM`, then reaps it before exiting. It is not a
+package, target owner, custom runner, or reporting layer.
 
 ### Unit 4: Official Nx CI selection
 
