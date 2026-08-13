@@ -1,7 +1,12 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["./tools/quality/evidence-driven.mjs"],
   "options": {
     "typeAware": true,
     "typeCheck": false
+  },
+  "rules": {
+    "gentle-quality/no-catch-binding-cast": "error",
+    "gentle-quality/no-unvalidated-json-parse-cast": "error"
   }
 }
