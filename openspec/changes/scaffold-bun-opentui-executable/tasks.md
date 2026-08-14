@@ -35,10 +35,10 @@ PR 1 is the current CLI/project-boundary slice. Each PR merges to `master` befor
 
 ## Phase 2: Renderer and Linux Build
 
-- [ ] 2.1 RED: add `test/app.test.tsx` using `testRender` at 50x14 for “Discovery is not connected.”, no fabricated count, and plain-`q` destroy/exit behavior.
-- [ ] 2.2 Implement `src/{tui.tsx,app.tsx}` with deferred renderer import, idempotent `CliRenderer.destroy()`, and no Effect Atom, demo data, or smoke flag.
-- [ ] 2.3 Add `build.ts` and app build target: verify exact Bun, clean `dist/apps/gentle-observe`, inject package version, set glibc, use Solid Bun plugin and `bun-linux-x64-baseline`.
-- [ ] 2.4 GREEN: run `nx run app-tui:typecheck`/component tests and clean compiled `gentle-observe`; fail nonzero with compilation/asset attribution.
+- [x] 2.1 RED: add `test/app.test.tsx` using `testRender` at 50x14 for “Discovery is not connected.”, no fabricated count, and plain-`q` destroy/exit behavior.
+- [x] 2.2 Implement `src/{tui.tsx,app.tsx}` with deferred renderer import, idempotent `CliRenderer.destroy()`, and no Effect Atom, demo data, or smoke flag.
+- [x] 2.3 Add `build.ts` and app build target: verify exact Bun, clean `dist/apps/gentle-observe`, inject package version, set glibc, use Solid Bun plugin and `bun-linux-x64-baseline`.
+- [x] 2.4 GREEN: run `nx run app-tui:typecheck`/component tests and clean compiled `gentle-observe`; fail nonzero with compilation/asset attribution.
 
 ## Phase 3: Native Release-Boundary Proof
 

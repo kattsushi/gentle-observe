@@ -4,12 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "sh scripts/verify-bun.sh && bun run build.ts",
     "typecheck": "sh scripts/verify-bun.sh && tsc --noEmit -p tsconfig.json",
     "test": "sh scripts/verify-bun.sh && bun test test"
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
-    "effect": "catalog:"
+    "@opentui/core": "catalog:",
+    "@opentui/core-linux-x64": "catalog:",
+    "@opentui/solid": "catalog:",
+    "effect": "catalog:",
+    "solid-js": "catalog:"
   },
   "devDependencies": {
     "bun-types": "catalog:tooling",
@@ -23,6 +28,12 @@
       },
       "typecheck": {
         "cache": true
+      },
+      "build": {
+        "cache": true,
+        "outputs": [
+          "{workspaceRoot}/dist/apps/gentle-observe"
+        ]
       }
     }
   }

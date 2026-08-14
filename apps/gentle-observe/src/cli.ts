@@ -8,14 +8,18 @@ const writeOutput = Effect.fn("GentleObserveCli.writeOutput")(function* (message
   yield* Stream.make(message).pipe(Stream.run(stdio.stdout()));
 });
 
-const unavailableRenderer = Effect.fn("GentleObserveCli.unavailableRenderer")(function* () {
-  return yield* new CliError.UserError({
-    cause: "renderer unavailable",
-    userMessage: "gentle-observe interactive rendering is not available until Phase 2.",
-  });
-});
-
 type StartRenderer = () => Effect.Effect<void, CliError.UserError>;
+
+const startInteractiveRenderer = Effect.fn("GentleObserveCli.startRenderer")(() =>
+  Effect.tryPromise({
+    try: async () => (await import("./tui")).startTui(),
+    catch: (cause) =>
+      new CliError.UserError({
+        cause,
+        userMessage: "gentle-observe could not start the terminal renderer.",
+      }),
+  }),
+);
 
 const runCommand = Effect.fn("GentleObserveCli.runCommand")(function* (
   options: { readonly version: boolean },
@@ -40,7 +44,7 @@ const runCommand = Effect.fn("GentleObserveCli.runCommand")(function* (
   return yield* startRenderer();
 });
 
-export const makeCommand = (startRenderer: StartRenderer = unavailableRenderer) =>
+export const makeCommand = (startRenderer: StartRenderer = startInteractiveRenderer) =>
   Command.make("gentle-observe", { version: Flag.boolean("version") }, (options) =>
     runCommand(options, startRenderer),
   );
