@@ -1,4 +1,5 @@
 # Apply Progress: Scaffold Bun OpenTUI Executable
+
 # Apply Progress: Scaffold Bun OpenTUI Executable
 
 ## PR 1 Slice
@@ -80,7 +81,7 @@
 
 | Evidence             | Exact result                                                                                                                                                                                                                                                 |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Host-boundary scan   | A targeted `rg` scan found no direct Node imports, console calls, or process exits in `build.ts`.                                                                                                                                                           |
+| Host-boundary scan   | A targeted `rg` scan found no direct Node imports, console calls, or process exits in `build.ts`.                                                                                                                                                            |
 | Focused typecheck    | `mise exec bun@1.3.14 -- bunx nx run app-tui:typecheck --skipNxCache` exited 0.                                                                                                                                                                              |
 | Focused tests        | `mise exec bun@1.3.14 -- bunx nx run app-tui:test --skipNxCache` exited 0 under Bun 1.3.14.                                                                                                                                                                  |
 | Build                | `mise exec bun@1.3.14 -- bunx nx run app-tui:build --skipNxCache` exited 0 and emitted `dist/apps/gentle-observe/gentle-observe`.                                                                                                                            |
