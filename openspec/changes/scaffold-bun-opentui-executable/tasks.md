@@ -42,12 +42,12 @@ PR 1 is the current CLI/project-boundary slice. Each PR merges to `master` befor
 
 ## Phase 3: Native Release-Boundary Proof
 
-- [ ] 3.1 RED: add `test/e2e.test.ts` for compiled binary version/non-TTY, unrelated-cwd ANSI readiness, `q` zero exit, timeout TERM→KILL cleanup, and cleanup/failure attribution.
-- [ ] 3.2 GREEN: implement bounded 80x24 `Bun.spawn` PTY with isolated HOME/XDG/TMP, ANSI-only normalization, 10s deadline, bounded capture, and executable-only relocation.
-- [ ] 3.3 Run `nx run app-tui:e2e`; record Bun version, target, native package, artifact, relocation cwd, readiness, exit, and timeout-cleanup results in tasks/apply evidence.
+- [x] 3.1 RED: add `test/e2e.test.ts` for compiled binary version/non-TTY, unrelated-cwd ANSI readiness, `q` zero exit, timeout TERM→KILL cleanup, and cleanup/failure attribution.
+- [x] 3.2 GREEN: implement bounded 80x24 `Bun.spawn` PTY with isolated HOME/XDG/TMP, ANSI-only normalization, 10s deadline, bounded capture, and executable-only relocation.
+- [x] 3.3 Run `nx run app-tui:e2e`; record Bun version, target, native package, artifact, relocation cwd, readiness, exit, and timeout-cleanup results in tasks/apply evidence.
 
 ## Phase 4: Review, Closure, and Deferrals
 
-- [ ] 4.1 Run app targets and root `check`; update `apps/gentle-observe/README.md` with Linux-x64-only support and explicitly defer releases, Homebrew, macOS, arm64, musl, checksums, and signing.
+- [x] 4.1 Run app targets and root `check`; update `apps/gentle-observe/README.md` with Linux-x64-only support and explicitly defer releases, Homebrew, macOS, arm64, musl, checksums, and signing.
 - [ ] 4.2 Complete human `tuicr`, focused evidence, sequential PR review/merge to `master`, and hybrid apply-progress updates; rollback app, root manifest/catalog/scripts, and lockfile together.
 - [ ] 4.3 Create a separate planning/closure work unit for `bootstrap-workspace-toolchain`: mark Unit 3 rejected, defer generic CI Unit 4, reconcile OpenSpec/Engram with `master`, then archive; do not modify it here.
