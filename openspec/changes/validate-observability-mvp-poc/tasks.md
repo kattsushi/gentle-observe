@@ -29,8 +29,8 @@ Boundaries: issue-first, CI, `tuicr` before push, 800 lines/slice, RDD/native re
 
 ## Milestone A — Demo and First User Gate
 
-- [ ] 0.0 Before stacks, install/verify `github/gh-stack`, load official project skill, verify `gh stack view` metadata; do none during planning.
-- [ ] 0.1 **RED:** add compatibility test for published Effect 4.0.0-rc.108 / official atom-solid / Solid / OpenTUI; reject legacy atom, override, downgrade.
+- [x] 0.0 Before stacks, install/verify `github/gh-stack`, load official project skill, verify `gh stack view` metadata; do none during planning.
+- [x] 0.1 **RED:** add compatibility test for published Effect 4.0.0-rc.108 / official atom-solid / Solid / OpenTUI; reject legacy atom, override, downgrade.
 - [ ] 0.2 **GREEN:** update root/app `package.json` after proof; record DX only if safety needs it.
 - [ ] 1.1 **RED:** create contract/privacy/demo tests for planes, pre-projection RDD/payload denial, no-cost tokens, health, scenario reset.
 - [ ] 1.2 **GREEN:** create `src/{domain,sources,demo}/*` schemas and authoritative Effect Layers with provenance, capability, in-memory scenarios.
