@@ -1,24 +1,19 @@
-import { useKeyboard, useRenderer } from "@opentui/solid";
+import { useAtomValue } from "@effect/atom-react";
+import { useKeyboard } from "@opentui/react";
+import type { Atom } from "effect/unstable/reactivity/Atom";
 
 import type { ShellProjection } from "./ui/projection";
 
 export interface AppProps {
-  readonly onQuit?: () => void;
-  readonly projection: ShellProjection;
+  readonly onQuit: () => void;
+  readonly projection: Atom<ShellProjection>;
 }
 
 export const App = (props: AppProps) => {
-  const renderer = useRenderer();
-  const quit = () => {
-    if (renderer.isDestroyed) return;
-    renderer.destroy();
-  };
+  const projection = useAtomValue(props.projection);
 
   useKeyboard((key) => {
-    if (key.name === "q") {
-      if (props.onQuit === undefined) quit();
-      else props.onQuit();
-    }
+    if (key.name === "q") props.onQuit();
   });
 
   const sourceLabel = (source: Pick<ShellProjection["runtime"], "health" | "provenance">) =>
@@ -28,9 +23,9 @@ export const App = (props: AppProps) => {
 
   return (
     <box flexDirection="column" padding={1}>
-      {props.projection.demo ? <text>DEMO DATA</text> : undefined}
-      <text>Runtime: {sourceLabel(props.projection.runtime)}</text>
-      <text>Processes: {sourceLabel(props.projection.processes)}</text>
+      {projection.demo ? <text>DEMO DATA</text> : undefined}
+      <text>Runtime: {sourceLabel(projection.runtime)}</text>
+      <text>Processes: {sourceLabel(projection.processes)}</text>
       <text>q quit</text>
     </box>
   );

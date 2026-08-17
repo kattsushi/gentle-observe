@@ -34,6 +34,21 @@ Line accounting: 122 changed lines (120 added, 2 deleted), below the 180-line PR
 - Chain: PR2B dependencies/guidance → PR2C renderer/runtime → PR2D Overview/navigation.
 - React runtime, renderer, TSX, TypeScript/Bun/build configuration, and Atom bindings remain deferred.
 
+## Slice 2C / PR2C React Renderer Boundary
+
+- [x] React JSX/OpenTUI ordinary Bun compilation and explicit root lifecycle ownership.
+- Lifecycle correction: unmount latches before invocation; an unmount throw still attempts renderer destroy; repeated shutdown is safe; the original unmount error is rethrown by identity; renderer-originated and `q` shutdown remain correct.
+- Focused app/lifecycle verification through shims-first Bun 1.3.14 passed: 7 tests, 21 assertions, 0 failures. `tui-lifecycle.test.tsx` was intentionally explicit, not part of the configured app test target.
+- Final Bun 1.3.14 matrix passed with Nx children reporting `bun test v1.3.14`: compatibility 1/1; observability contracts 4/11; CLI 7/18; focused app+lifecycle 7/21; configured app target 13/34; quality 22 tests; native e2e 3/19; all 0 failures. Unique total: 48 passed, 0 failed; raw rerun total: 58.
+- Typecheck, lint, format check (38 files), native build, `git diff --check`, and manifest/lock integrity passed. Cleanup left root/app `node_modules`, root/app `dist`, `.nx`, coverage, temp, and `.tmp` absent.
+- Compiled PTY/e2e proof:
+  `PATH=/home/andresdavid/.local/share/mise/shims:$PATH mise exec bun@1.3.14 -- sh -c 'cd /home/andresdavid/devx-ops/gentle-observe-worktrees/validate-observability-mvp-poc-02c-react-renderer && bunx nx run app-tui:e2e --skipNxCache'`
+  exited 0: 3 tests, 19 assertions, 0 failures; build dependency and e2e succeeded.
+- Compiled non-retention/`q`-exit proof:
+  `PATH=/home/andresdavid/.local/share/mise/shims:$PATH mise exec bun@1.3.14 -- sh -c 'cd /home/andresdavid/devx-ops/gentle-observe-worktrees/validate-observability-mvp-poc-02c-react-renderer && bun test apps/gentle-observe/test/e2e.test.ts -t "proves version, non-TTY rejection, unrelated-cwd ANSI readiness, and q exit"'`
+  exited 0: 1 test passed, 2 filtered, 15 assertions, 0 failures; normal and demo PTYs exited 0 after `q` and terminal/child cleanup completed. The full e2e suite also proved TERM→KILL timeout cleanup leaves no child.
+- Overview/navigation remains deferred to PR2D. At verification freeze, no stage or commit had occurred; no push, PR, GitHub write, RDD/native review, or SDD attempt occurred. Rollback is limited to PR2C renderer/config/tests and these progress markers.
+
 ## Slice 2A / PR2A Truthful Shell
 
 - [x] 2.1a covers explicit demo/scenario forwarding, no-fallback health, persistent `DEMO DATA`, compact textual labels, and `q`.
