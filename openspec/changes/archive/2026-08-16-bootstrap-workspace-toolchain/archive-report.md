@@ -11,7 +11,7 @@ All 7/7 requirements, 6/6 scenarios, and 13/13 tasks are complete. The latest
 verification is the post-remediation PASS WITH WARNINGS report at evidence
 `sha256:e31919c209e63703dee11d63ed3e8a14f20be0bebf1a2433f37f1032bc91a4df`
 with report SHA-256
-`32a282914a92963407001d8a40331b78e513f9ba1069b6813fb8f6ff132eb5b4`.
+`135b2bce19981c158dc9d5934428c4d666a7f0664ee517d7d0108c63afd1550c`.
 There are zero CRITICAL findings.
 
 ## Final-state facts
