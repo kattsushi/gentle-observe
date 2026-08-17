@@ -176,7 +176,7 @@ Navigation is keyboard-first. Focus and status are not conveyed by color alone. 
 - Historical inspection is read-only and bounded. The UI exposes no checkout, resume, branch, fork, retry-run, approval, gate, or delivery action.
 - Agent detail prioritizes model identity, allowlisted effort/reasoning configuration, provenance, freshness, current/historical position, and honest unknowns.
 - Activity/log tables are metadata-only. SDD has a specialized canonical phase view with Strict TDD nested under apply/verify; Judgment Day and 4R/refuter views retain a persistent no-receipt/no-delivery-authority boundary; generic recognized non-RDD activity uses a canonical fallback view.
-- The implementation baseline is SolidJS with basic OpenTUI boxes, text, scroll areas, tabs, and tables. Termcn-inspired components require selective Solid port spikes and cannot block a basic fallback.
+- The implementation baseline is React with basic OpenTUI boxes, text, scroll areas, tabs, and tables. Termcn-inspired components require selective React compatibility spikes and cannot block a basic fallback.
 - Responsive behavior is deterministic across wide, standard, compact, and too-small terminals; the minimum interactive viewport is `50x14` cells.
 
 ## 8. Functional Requirements
@@ -439,11 +439,11 @@ Targets become release gates only after reference machines, fixtures, terminal s
 | Constraint            | Product implication                                                                                                                                                                             |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Runtime/process scope | Pi-only runtime and all recognized, version-compatible, stably observable non-RDD Gentle AI activity are the launch boundary; specialized rendering is limited to the named launch projections. |
-| TUI stack             | SolidJS and OpenTUI provide UI; Effect Atom Solid supplies reactive bindings.                                                                                                                   |
+| TUI stack             | React and OpenTUI provide UI; Effect Atom React supplies reactive bindings without owning authoritative state.                                                                                  |
 | Effect stack          | Effect 4 packages remain pinned to one compatible release; integrations vary behind services and Layers.                                                                                        |
 | Build                 | Nx orchestrates; Bun provides workspaces, runtime, production TUI build, and executable compilation.                                                                                            |
 | TypeScript            | TypeScript 7 and `@effect/tsgo` are the tooling direction.                                                                                                                                      |
-| Termcn                | Optional only after a Solid compatibility/port spike.                                                                                                                                           |
+| Termcn                | Optional only after a React compatibility/port spike.                                                                                                                                           |
 | Evidence              | Shallow research snapshots require revalidation before implementation depends on unstable details.                                                                                              |
 
 ## 14. Risks

@@ -4,15 +4,15 @@
 
 - [x] 0.0 Completed: official `github/gh-stack` v0.1.0, its OpenCode skill, clean repositories, and local tracker/child stack metadata were verified.
 - [x] 0.1 Completed: the corrected behavior-level RED test covers peer incompatibility, downgrade, overrides, legacy, and fallback packages; it deterministically fails on the unsupported baseline.
-- [ ] 0.2 Later official Atom Solid compatibility gate has not been attempted.
+- [x] 0.2 PR2B admits the exact peer-compatible Atom React tuple without runtime use.
 
-## RED Evidence
+## PR0 RED Evidence
 
 `mise exec bun@1.3.14 -- bun test --verbose apps/gentle-observe/test/dependency-compatibility.test.ts` exited 1 as expected: 0 pass / 1 fail. It reports six unsupported-baseline violations, including the Atom/Solid peer mismatch and the forbidden OpenTUI 0.1.6 TypeScript ^5 downgrade against workspace TypeScript 7.0.2.
 
-## Compatibility Gate
+## PR0 Compatibility Gate
 
-No non-downgrade, all-peer-compatible tuple has been established. The prior 0.1.6 proposal is forbidden because it downgrades OpenTUI and its TypeScript ^5 peer is incompatible with the workspace TypeScript 7.0.2. No manifest, lockfile, install, dependency resolution, or GREEN attempt occurred in this corrective rerun.
+At PR0, no non-downgrade compatible tuple existed. The rejected 0.1.6 proposal downgraded OpenTUI and excluded workspace TypeScript 7.0.2; PR2B later establishes the React tuple without overrides.
 
 ## Work Unit Evidence
 
@@ -27,6 +27,12 @@ No non-downgrade, all-peer-compatible tuple has been established. The prior 0.1.
 Feature Branch Chain PR0 targets `feat/validate-observability-mvp-poc`. The slice contains compatibility evidence only; no UI, contracts, demo, live integration, RDD, commit, push, or PR operation occurred.
 
 Line accounting: 122 changed lines (120 added, 2 deleted), below the 180-line PR0 limit.
+
+## Slice 2B / PR2B React Dependency Boundary
+
+- Exact React/Atom React/OpenTUI pins, required direct peers/types, lockfile, compatibility test, and active guidance only.
+- Chain: PR2B dependencies/guidance → PR2C renderer/runtime → PR2D Overview/navigation.
+- React runtime, renderer, TSX, TypeScript/Bun/build configuration, and Atom bindings remain deferred.
 
 ## Slice 2A / PR2A Truthful Shell
 
@@ -53,6 +59,6 @@ PR1 is local-only at commit `271fa76f8132e3cd17838826f254667b2f9622e1`: no UI, L
 
 ## Maintainer-Approved UI Authority Amendment
 
-The MVP UI is temporarily decoupled from Atom Solid. Stable immutable UI projections and component props are the authority boundary; framework-local state may manage navigation/selection. Do not create an Atom-shaped abstraction. The official Atom Solid adapter is a later compatibility gate only after a published non-downgrade all-peer-compatible tuple exists. Peer overrides, downgrades, legacy/fallback, and unpublished packages remain forbidden.
+Stable immutable UI projections and component props remain the authority boundary; framework-local state may manage navigation/selection. PR2B admits the official Atom React dependency tuple but no runtime binding. Do not create an Atom-shaped abstraction; peer overrides, Solid, legacy/fallback, and unpublished packages remain forbidden.
 
-PR2A may remain Solid/OpenTUI as an intermediate local parent. The selected next child migrates this same shell boundary to React/OpenTUI before Overview/navigation work. That renderer migration is separate from the still-incomplete official Atom compatibility gate and MUST NOT claim Atom compatibility.
+PR2A remains the intermediate Solid/OpenTUI parent. PR2C migrates the same shell boundary to React/OpenTUI after PR2B; PR2D adds Overview/navigation. Dependency admission MUST NOT be reported as renderer or Atom runtime adoption.

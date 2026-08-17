@@ -1,6 +1,6 @@
-import { readFile } from "node:fs/promises";
-
 import { describe, expect, test } from "bun:test";
+import appManifest from "../package.json" with { type: "json" };
+import rootManifest from "../../../package.json" with { type: "json" };
 
 interface PackageJson {
   readonly dependencies?: Record<string, string>;
@@ -14,9 +14,6 @@ interface PackageJson {
   };
 }
 
-const readPackageJson = async (path: string) =>
-  JSON.parse(await readFile(new URL(path, import.meta.url), "utf8")) as PackageJson;
-
 const dependencyNames = (manifest: PackageJson) =>
   new Set([
     ...Object.keys(manifest.dependencies ?? {}),
@@ -24,59 +21,83 @@ const dependencyNames = (manifest: PackageJson) =>
   ]);
 
 const publishedPeers = {
-  atomSolid: {
+  atomReact: {
     effect: "^4.0.0-rc.108",
-    solid: ">=1.9.14 <2.0.0",
+    react: ">=19.2.7 <20.0.0",
+    scheduler: ">=0.27.0 <0.28.0",
   },
-  currentOpenTuiSolid: {
-    solid: "1.9.12",
-  },
-  rejectedOpenTuiSolidDowngrade: {
-    solid: "^1.9.9",
-    typescript: "^5",
+  openTuiReact: {
+    react: ">=19.2.0",
+    reactDevtoolsCore: "^7.0.1",
+    ws: "^8.18.0",
   },
 } as const;
 
+const exactTuple = {
+  "@effect/atom-react": "4.0.0-rc.108",
+  "@opentui/core": "0.5.2",
+  "@opentui/core-linux-x64": "0.5.2",
+  "@opentui/react": "0.5.2",
+  "@types/react": "19.2.18",
+  "@types/react-reconciler": "0.33.0",
+  "@types/scheduler": "0.26.0",
+  "@types/ws": "8.18.1",
+  effect: "4.0.0-rc.108",
+  react: "19.2.8",
+  "react-devtools-core": "7.0.1",
+  scheduler: "0.27.0",
+  ws: "8.21.3",
+};
+
 describe("observability dependency compatibility", () => {
   test("rejects peer-incompatible, downgraded, overridden, legacy, and fallback tuples", async () => {
-    const [root, app] = await Promise.all([
-      readPackageJson("../../../package.json"),
-      readPackageJson("../package.json"),
-    ]);
+    const root: PackageJson = rootManifest;
+    const app: PackageJson = appManifest;
     const catalog = root.workspaces?.catalog ?? {};
     const names = new Set([...dependencyNames(root), ...dependencyNames(app)]);
     const violations = [
-      catalog.effect === "4.0.0-rc.108" ? undefined : "Effect must remain 4.0.0-rc.108",
-      catalog["@effect/atom-solid"] === "4.0.0-rc.108"
+      Object.entries(exactTuple).every(([name, version]) => catalog[name] === version)
         ? undefined
-        : "Atom Solid must be the official 4.0.0-rc.108 package",
-      catalog["solid-js"] === "1.9.14" ? undefined : "Solid must satisfy Atom Solid >=1.9.14",
-      catalog["@opentui/solid"] === "0.5.2"
+        : "the root catalog must pin the exact verified React tuple",
+      [
+        "@effect/atom-react",
+        "@opentui/core",
+        "@opentui/core-linux-x64",
+        "@opentui/react",
+        "effect",
+        "react",
+        "react-devtools-core",
+        "scheduler",
+        "ws",
+      ].every((name) => app.dependencies?.[name] === "catalog:") &&
+      ["@types/react", "@types/react-reconciler", "@types/scheduler", "@types/ws"].every(
+        (name) => app.devDependencies?.[name] === "catalog:",
+      )
         ? undefined
-        : "OpenTUI must not be downgraded below the current 0.5.2 baseline",
-      publishedPeers.atomSolid.effect === "^4.0.0-rc.108" &&
-      publishedPeers.atomSolid.solid === ">=1.9.14 <2.0.0" &&
-      publishedPeers.currentOpenTuiSolid.solid === catalog["solid-js"] &&
-      catalog["solid-js"] === "1.9.14"
+        : "the app must declare every required runtime peer and type package",
+      publishedPeers.atomReact.effect === "^4.0.0-rc.108" &&
+      publishedPeers.atomReact.react === ">=19.2.7 <20.0.0" &&
+      publishedPeers.atomReact.scheduler === ">=0.27.0 <0.28.0" &&
+      publishedPeers.openTuiReact.react === ">=19.2.0" &&
+      publishedPeers.openTuiReact.reactDevtoolsCore === "^7.0.1" &&
+      publishedPeers.openTuiReact.ws === "^8.18.0"
         ? undefined
-        : "published Atom Solid and OpenTUI Solid peers must agree on Solid",
-      publishedPeers.rejectedOpenTuiSolidDowngrade.typescript === "^5" &&
+        : "the tuple must satisfy published Atom React and OpenTUI React peers",
       root.workspaces?.catalogs?.tooling?.typescript === "7.0.2"
-        ? "OpenTUI 0.1.6 is rejected: its TypeScript ^5 peer excludes workspace TypeScript 7.0.2"
-        : undefined,
-      publishedPeers.rejectedOpenTuiSolidDowngrade.solid === "^1.9.9"
-        ? "OpenTUI 0.1.6 is rejected: it is a forbidden downgrade from 0.5.2"
-        : undefined,
-      app.dependencies?.["@effect/atom-solid"] === "catalog:"
         ? undefined
-        : "the app must use the catalog Atom Solid package",
+        : "TypeScript must remain unchanged at 7.0.2",
       root.overrides === undefined && app.overrides === undefined
         ? undefined
         : "peer overrides are forbidden",
-      ["@effect/atom", "@effect/atom-solid-legacy", "@effect/atom-solid-fallback"].some((name) =>
-        names.has(name),
-      )
-        ? "legacy or fallback Atom packages are forbidden"
+      [
+        "@effect/atom",
+        "@effect/atom-solid",
+        "@effect/atom-solid-legacy",
+        "@effect/atom-solid-fallback",
+        "@opentui/solid",
+        "solid-js",
+      ].some((name) => names.has(name))
+        ? "Solid, legacy, and fallback packages are forbidden"
         : undefined,
     ].filter((violation): violation is string => violation !== undefined);
 
