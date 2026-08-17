@@ -17,8 +17,9 @@ bun run check
 ```
 
 `format` is Oxfmt check-only. Use `format:write` only for an intentional
-rewrite. Root `check` remains the infrastructure aggregate; future app build
-and E2E targets are not present in PR 1.
+rewrite. Root `check` remains the infrastructure aggregate. Application build
+and E2E targets are available locally through `app-tui`, but remain outside the
+CI target set and this root aggregate.
 
 ## CI target selection
 
@@ -40,6 +41,8 @@ Local Nx caching can only benefit tasks within this single job. Remote caching
 is intentionally deferred until Nx Cloud or a self-hosted remote cache is
 approved and configured. No build artifacts currently exist to upload.
 
-Build, E2E, release, and deployment targets remain outside the current target
-surface. CD and release automation belong in a separate future workflow after
-the required build and release prerequisites exist.
+Build and E2E targets are part of `app-tui`'s local Nx target surface, but are
+intentionally excluded from the current CI `run-many` target set and root
+infrastructure aggregate. Release and deployment targets remain outside the
+current target surface. CD and release automation belong in a separate future
+workflow after the required build and release prerequisites exist.
