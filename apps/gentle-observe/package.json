@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "sh scripts/verify-bun.sh && bun run build.ts",
+    "e2e": "sh scripts/verify-bun.sh && bun test test/e2e.test.ts",
     "typecheck": "sh scripts/verify-bun.sh && tsc --noEmit -p tsconfig.json",
-    "test": "sh scripts/verify-bun.sh && bun test test"
+    "test": "sh scripts/verify-bun.sh && bun test test/cli.test.ts test/app.test.tsx test/executable-pty.test.ts"
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
@@ -33,6 +34,12 @@
         "cache": true,
         "outputs": [
           "{workspaceRoot}/dist/apps/gentle-observe"
+        ]
+      },
+      "e2e": {
+        "cache": false,
+        "dependsOn": [
+          "build"
         ]
       }
     }

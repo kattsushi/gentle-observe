@@ -1,7 +1,5 @@
 # Apply Progress: Scaffold Bun OpenTUI Executable
 
-# Apply Progress: Scaffold Bun OpenTUI Executable
-
 ## PR 1 Slice
 
 - Accepted delivery: `auto-chain`, three sequential `stacked-to-main` PRs; 800 authored lines per slice and no pending decision.
@@ -104,3 +102,73 @@
 | Focused checks    | Exact Bun 1.3.14 app typecheck and build completed with Nx cache skipped; compiled `--version` exited 0 with `gentle-observe 0.1.0`.                          |
 | Evidence reuse    | Existing Phase 2 tests and runtime evidence remain valid because this correction changes only the internal typed error representation, not renderer behavior. |
 | Rollback          | Revert only `apps/gentle-observe/build.ts` and this Data correction section; Phase 1 and Phase 3 remain unchanged.                                            |
+
+## PR 3 Slice
+
+- Delivery: accepted `auto-chain` in the sequential `stacked-to-main` plan; this Phase 3-only PR slice runs on `feat/opentui-native-pty` from clean `master` commit `1948abcb`. No commit, push, PR, GitHub, or native-review mutation was made by this apply phase.
+- Scope: the test-owned E2E harness executes only a copied compiled `gentle-observe` artifact. It never launches source mode, runs the copy from a unique unrelated `/tmp/gentle-observe-e2e.XXXXXX/run` directory, and deletes the artifact copy plus isolated HOME/XDG/TMP hierarchy in `finally`.
+- Exclusions: release/CD, Homebrew, macOS, arm64, musl, checksums, signing, deployment, discovery integration, fake data, smoke flags, Phase 4 closure, and unrelated warning cleanup remain untouched.
+
+## Completed Tasks
+
+- [x] 3.1 RED: added `test/e2e.test.ts` before its harness existed. Exact Bun 1.3.14 `bun test test/e2e.test.ts` exited 1, establishing the missing-harness RED state.
+- [x] 3.2 GREEN: added test-owned `Bun.spawn` PTY support with `80x24`, `TERM=xterm-256color`, isolated HOME/XDG/TMP, 64 KiB capture, ANSI-only normalization, a 10s readiness/quit deadline, and deterministic `TERM` then `KILL` cleanup.
+- [x] 3.3 GREEN: exact Bun 1.3.14 `mise exec bun@1.3.14 -- bunx nx run app-tui:e2e --skipNxCache` exited 0 after its `app-tui:build` dependency. It proved compiled version, non-TTY rejection, truthful PTY readiness, plain `q` zero exit, and forced timeout cleanup.
+
+## PR 3 Work Unit Evidence
+
+| Evidence                       | Exact result                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RED                            | `mise exec bun@1.3.14 -- bun test test/e2e.test.ts` from `apps/gentle-observe` exited 1 before `test/support/executable-pty.ts` existed.                                                                                                                                                                                                          |
+| Focused test                   | `mise exec bun@1.3.14 -- bun test test/e2e.test.ts` exited 0 after GREEN, covering compiled version/non-TTY plus unrelated-cwd PTY readiness and `q`; asset-stage attribution; forced TERM-to-KILL readiness-deadline cleanup.                                                                                                                    |
+| Runtime harness                | `mise exec bun@1.3.14 -- bunx nx run app-tui:e2e --skipNxCache` exited 0. Its non-cacheable E2E target depends on `app-tui:build` and executes only `dist/apps/gentle-observe/gentle-observe`, copied with preserved mode to an isolated artifact directory.                                                                                      |
+| Bun and build target           | Bun `1.3.14` (`0d9b296a`); `bun-linux-x64-baseline`; `@opentui/core-linux-x64@0.5.2`; artifact `dist/apps/gentle-observe/gentle-observe`.                                                                                                                                                                                                         |
+| Relocation and readiness       | The executable copy ran from unique unrelated cwd `/tmp/gentle-observe-e2e.XXXXXX/run` with isolated `HOME`, `TMPDIR`, `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, and `XDG_DATA_HOME`; ANSI-only normalized output contained `Discovery is not connected.` and `q quit`.                                                                                |
+| Exit and cleanup               | Compiled `--version` exited 0 with `gentle-observe 0.1.0`; compiled default non-TTY exited 1 with `requires an interactive terminal`; plain `q` exited 0. The forced child ignored TERM, received TERM then KILL, reported `terminalClosed: true` and `noLeaks: true`, and its isolated directory was removed.                                    |
+| Failure attribution and bounds | `PtyE2eError` uses `Data.TaggedError` and stages `asset`, `environment`, `version`, `non-tty`, `readiness`, `timeout`, `exit-code`, and `cleanup`. Capture retains only the final 64 KiB by raw bytes, and all readiness/exit waits are deadline-bound without synchronization sleeps.                                                            |
+| Quality                        | Exact Bun 1.3.14 `nx run app-tui:typecheck --skipNxCache`, `nx run app-tui:test --skipNxCache`, targeted Oxfmt check, and `nx run app-tui:e2e --skipNxCache` exited 0. `bun run check`, forced root format/lint/quality checks, check-only root Oxfmt, and `git diff --check` exited 0; only the pre-existing `src/app.tsx` lint warning remains. |
+| Rollback                       | Revert only `apps/gentle-observe/package.json`, `apps/gentle-observe/test/e2e.test.ts`, `apps/gentle-observe/test/support/executable-pty.ts`, and Phase 3 task/progress updates. Phase 1 and Phase 2 remain intact.                                                                                                                               |
+
+## PR 3 Native Attempt Settlement
+
+- Token: `sha256:41205a1f3cc81ea68e7a4efaa1338cfaf207c56b3dfd2115f42c5ed79e9fabe2`.
+- Acquire request: `phase3-apply-acquire-20260814-022`.
+- Settlement request: `phase3-apply-settle-20260814-023`.
+- Attempts: 2 of 2 maximum. Attempt 1 exposed that terminal close could leave a trailing ANSI DCS response after readiness; the harness now snapshots normalized output exactly when deterministic readiness is observed. Attempt 2 passed the exact Nx E2E target. Settlement: passed; no successor lineage or remediation was created.
+
+## Phase 3 Bounded Correction
+
+- Scope: correction of four independent-validator blockers only: non-E2E unit targeting, APC normalization, raw-byte capture, and early-exit attribution. Phase 4 and all release, delivery, discovery, and platform work remain excluded.
+- `app-tui:test` now names only CLI, component, and PTY-support regressions; `app-tui:e2e` remains non-cacheable and depends on `build`.
+- Capture retains the final 65,536 raw bytes before a single decode. CSI, OSC, DCS, and Kitty APC sequences are removed for assertions; normalized readiness output has no ESC byte.
+- Missing/non-executable artifacts report `asset`; setup/terminal failures report `environment`; child exit before readiness reports `exit-code`; an unmet readiness deadline reports `readiness`; post-quit deadline remains `timeout`; cleanup is unchanged.
+
+| Evidence             | Exact result                                                                                                                                                                                                                                                                                         |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RED → GREEN          | Before exports/implementation, `mise exec bun@1.3.14 -- bun test test/executable-pty.test.ts` exited 1. After correction it exited 0; the app unit target then reported 11 pass, 0 fail, 26 assertions across 3 files without `dist`.                                                                |
+| Focused unit proof   | After `rm -rf dist/apps/gentle-observe`, `mise exec bun@1.3.14 -- bunx nx run app-tui:test --skipNxCache` exited 0 and confirmed `CLEAN_DIST=0`.                                                                                                                                                     |
+| Runtime harness      | From clean state, `mise exec bun@1.3.14 -- bunx nx run app-tui:e2e --skipNxCache` built then passed. It retained compiled-only unrelated-cwd, 80x24, TERM→KILL, isolated environment, and plain-`q` evidence.                                                                                        |
+| Quality and CI       | `app-tui:typecheck`, `app-tui:build`, targeted check-only Oxfmt, and `git diff --check` exited 0. Clean `bunx nx run-many -t format,lint,quality-test,test,typecheck --outputStyle=static --nxBail` passed 5/5 tasks with no `dist`; the only lint output is the pre-existing `src/app.tsx` warning. |
+| Rollback and cleanup | Revert only the Phase 3 harness/tests, its app test script, and this correction section. The final cleanup removed `dist/apps/gentle-observe` and isolated `/tmp/gentle-observe-e2e.*` trees; no child remained.                                                                                     |
+
+## Phase 3 Correction Native Attempt Settlement
+
+- Token: `sha256:e387310448ea7308fa7a3392b25e2c75637937889e760e68b2a523f8c5657349`.
+- Acquire request: `phase3-correction-acquire-20260814-029`; settlement request: `phase3-correction-settle-20260814-030`.
+- Attempts: 1 of 1. Settlement: passed; no successor lineage. The correction is within its 200-line budget and the complete authored candidate remains within 800 lines.
+
+## PR 3 Phase 4.1 Support Documentation and Checks
+
+- Scope: completed task 4.1 only. `apps/gentle-observe/README.md` states the validated native Linux x64 glibc-baseline boundary and explicitly defers releases, Homebrew, macOS, arm64, musl, checksums, and signing.
+- Exclusions: task 4.2 human review/delivery and task 4.3 bootstrap-workspace closure remain pending. No Phase 3 runtime code or native-attempt ledger state changed.
+
+## PR 3 Phase 4.1 Work Unit Evidence
+
+| Evidence                | Exact result                                                                                                                                                                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Focused test command    | `mise exec bun@1.3.14 -- bunx nx run app-tui:test --skipNxCache` exited 0.                                                                                                                                                         |
+| App target sweep        | Exact Bun 1.3.14 `app-tui:typecheck`, `app-tui:test`, `app-tui:build`, and non-cacheable `app-tui:e2e` each exited 0 with Nx cache skipped; E2E rebuilt the executable.                                                            |
+| Runtime harness         | `mise exec bun@1.3.14 -- bunx nx run app-tui:e2e --skipNxCache` exited 0 and retained the compiled-only unrelated-cwd Linux x64 PTY, readiness, plain-`q`, and cleanup proof.                                                      |
+| Root quality            | `mise exec bun@1.3.14 -- bunx nx run gentle-observe:check --skipNxCache` exited 0: format passed, quality-test reported 21 pass/0 fail, and lint emitted only the pre-existing `src/app.tsx` warning. `git diff --check` exited 0. |
+| Formatter normalization | The first root check correctly exposed only a new README formatting issue; `gentle-observe:format-write` normalized it before the passing proof.                                                                                   |
+| Rollback boundary       | Revert only `apps/gentle-observe/README.md` and this task/progress evidence; Phase 1–3 source, package target, and runtime behavior remain intact.                                                                                 |
