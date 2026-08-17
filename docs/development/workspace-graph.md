@@ -21,16 +21,21 @@ rewrite. Root `check` remains the infrastructure aggregate. Application build
 and E2E targets are available locally through `app-tui`, but remain outside the
 CI target set and this root aggregate.
 
+Oxfmt scans normal repository documentation, source, tests, and generated
+files. Its only intentional exclusions are `.atl/`, project-local
+`.agents/skills/`, and the entire root `openspec/` tree, including active and
+archived changes, main specs, and OpenSpec configuration.
+
 ## CI target selection
 
 The `.github/workflows/ci.yml` workflow is named `CI`. It runs `format`, `lint`,
 `quality-test`, `test`, and `typecheck` when a pull request targeting `master` is
 opened, updated, or reopened, and again on pushes to `master`. Nx tasks are
 invoked through the installed CLI with `bunx nx run-many`; they do not require a
-generic action `uses:` step. The root format and lint targets scan the whole
-repository, but the application has no dependency edge to the root project.
-Using `nx affected` could therefore skip those global gates for an
-application-only change.
+generic action `uses:` step. The root format target scans the repository except
+for its three declared exclusions, while lint scans the whole repository. The
+application has no dependency edge to the root project. Using `nx affected`
+could therefore skip those global gates for an application-only change.
 
 Checkout fetches full history and uses a treeless partial clone, materializing
 required trees on demand, so CI is ready for a future move to `nx affected`.

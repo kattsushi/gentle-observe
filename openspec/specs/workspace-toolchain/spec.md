@@ -46,15 +46,24 @@ TypeScript or Effect diagnostics target.
 
 The `format` target MUST use Oxfmt check mode and MUST NOT modify checked
 files. The separate `format-write` target MAY make an intentional rewrite.
-`.oxfmtignore` MUST contain only `.atl/` and `.agents/skills/`; `.atl/` MUST
-remain versioned, and project-local skill documentation MUST remain excluded
-from Oxfmt formatting.
+`.oxfmtignore` MUST exclude only `.atl/`, `.agents/skills/`, and the root
+`openspec/` tree. `.atl/` MUST remain versioned, project-local skill
+documentation MUST remain excluded from Oxfmt formatting, and every OpenSpec
+path MUST remain outside the formatter boundary. Documentation, source, tests,
+and other generated files MUST remain in scope unless separately named here.
 
 #### Scenario: Check-only formatting
 
 - GIVEN formatted candidate files
 - WHEN `bun run format` runs
 - THEN it exits successfully and candidate file bytes are unchanged
+
+#### Scenario: OpenSpec formatting boundary
+
+- GIVEN intentionally malformed comparable files under root `openspec/` and
+  outside all ignored roots
+- WHEN Oxfmt runs in check mode with the canonical ignore file
+- THEN it ignores the OpenSpec file and reports the comparable in-scope file
 
 ### Requirement: Honest project-owned testing
 
