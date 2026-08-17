@@ -69,7 +69,7 @@
       },
       "quality-test": {
         "cache": true,
-        "command": "node --test tools/quality/evidence-driven.test.mjs"
+        "command": "node --test tools/quality/*.test.mjs"
       }
     }
   },
