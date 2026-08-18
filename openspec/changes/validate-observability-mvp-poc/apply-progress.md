@@ -34,6 +34,14 @@ Line accounting: 122 changed lines (120 added, 2 deleted), below the 180-line PR
 - Chain: PR2B dependencies/guidance → PR2C renderer/runtime → PR2D Overview/navigation.
 - React runtime, renderer, TSX, TypeScript/Bun/build configuration, and Atom bindings remain deferred.
 
+## Slice 2D / PR2D Overview + Navigation
+
+- [x] React-local Runtime/Processes plane plus ID selection; arrows/`j`/`k`/`Tab`; truthful `Enter` unavailable-detail boundary plus `Esc`; exact `50x14`; stale Atom ID/detail reconciliation; Runtime `observed` vs Processes `reported`; demo/source/privacy/`q`/non-retention preserved.
+- RED→GREEN (Bun 1.3.14): initial focused RED was 1/3 because Overview was missing; final unique total was 49 pass, 0 fail. Focused navigation was 1/13; configured full app target was 14/48.
+- Typecheck, lint, format, quality, build, and e2e passed; native `q`/non-retention proof passed; manifest and lockfile were unchanged.
+- Corrected verification findings: formatting and stale selection/detail-route resurrection. React `act` warnings remain non-failing.
+- Only 2.1b/2.2b are complete; Details, Timeline, Live, persistence, and refresh remain deferred.
+
 ## Slice 2C / PR2C React Renderer Boundary
 
 - [x] React JSX/OpenTUI ordinary Bun compilation and explicit root lifecycle ownership.
