@@ -42,7 +42,7 @@ Insert a validation checkpoint before roadmap investment. Test whether agent eng
 3. Conditional replaceable Live Layers, then bounded hardening.
 4. Resume the preserved roadmap, or stop/pivot with evidence.
 
-The UI consumes normalized contracts only. Effect Atom Solid may own provider-to-view reactivity, never authoritative storage. Runtime and process evidence remain separate. Token usage is a bounded optional POC experiment and explicit decision point; Live Layers may report unsupported.
+The UI consumes normalized contracts only. Effect Atom React may bind provider-to-view reactivity, never authoritative storage; dependency admission does not itself establish runtime use. Runtime and process evidence remain separate. Token usage is a bounded optional POC experiment and explicit decision point; Live Layers may report unsupported.
 
 ## Risks
 

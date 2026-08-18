@@ -10,14 +10,22 @@
     "test": "sh scripts/verify-bun.sh && bun test test/cli.test.ts test/app.test.tsx test/executable-pty.test.ts"
   },
   "dependencies": {
+    "@effect/atom-react": "catalog:",
     "@effect/platform-bun": "catalog:",
     "@opentui/core": "catalog:",
     "@opentui/core-linux-x64": "catalog:",
-    "@opentui/solid": "catalog:",
+    "@opentui/react": "catalog:",
     "effect": "catalog:",
-    "solid-js": "catalog:"
+    "react": "catalog:",
+    "react-devtools-core": "catalog:",
+    "scheduler": "catalog:",
+    "ws": "catalog:"
   },
   "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-reconciler": "catalog:",
+    "@types/scheduler": "catalog:",
+    "@types/ws": "catalog:",
     "bun-types": "catalog:tooling",
     "typescript": "catalog:tooling"
   },
