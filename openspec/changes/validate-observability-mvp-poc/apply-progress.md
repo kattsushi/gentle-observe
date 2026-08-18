@@ -31,3 +31,16 @@ Line accounting: 122 changed lines (120 added, 2 deleted), below the 180-line PR
 ## Next Safe Local Work Unit
 
 Task 1.1 (RED contract/privacy/demo tests) is the only later work unit that is dependency-independent from the unresolved Atom/Solid tuple; prepare it on the next local feature-chain child after PR0 is clean. All GREEN/UI/demo/executable/Live tasks remain dependent on their preceding slices or the later dual-continue gate.
+
+## Slice 1 / PR1 Contracts + Demo
+
+- [x] 1.1 RED tests cover malformed/private/RDD denial, bounds, health, token states, deterministic ordering, and substitution.
+- [x] 1.2 GREEN adds bounded evidence/records, explicit availability/capabilities/missingness, source tags, and deterministic Layers.
+
+| Evidence | Result |
+|---|---|
+| RED/Focused tests | Corrective RED: 4 tests, 3 failures; GREEN: 4 tests, 11 assertions, 0 failures. |
+| Runtime/type/quality | Layer substitution passed; focused typecheck/lint/format passed; `bun run check` only fails the inherited compatibility RED. |
+| Rollback | Revert `src/{domain/evidence,sources/evidence-sources,demo/layers}.ts` and `test/observability-contracts.test.ts`. |
+
+PR1 is local-only: no UI, Live, persistence, dependency, GitHub, staging, or commit changes. Inclusive candidate is 326 lines.
