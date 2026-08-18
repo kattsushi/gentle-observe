@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { PtyE2eError, runExecutableProof, runTimeoutCleanupProof } from "./support/executable-pty";
+import {
+  PtyE2eError,
+  runCompiledNavigationProof,
+  runExecutableProof,
+  runTimeoutCleanupProof,
+} from "./support/executable-pty";
 
 const artifactPath = `${import.meta.dir}/../../../dist/apps/gentle-observe/gentle-observe`;
 
@@ -23,6 +28,35 @@ describe("compiled gentle-observe executable", () => {
     expect(result.demoPty.output).toContain("Processes: available | demo");
     expect(result.demoPty.exitCode).toBe(0);
     expect(result.demoPty.cleanup.terminalClosed).toBe(true);
+  });
+
+  test("proves the compact Complex navigation journey and natural q cleanup", async () => {
+    const result = await runCompiledNavigationProof({ artifactPath });
+
+    expect(result.output).toContain("DEMO DATA");
+    expect(result.output).toContain("Processes [active]");
+    expect(result.steps).toEqual([
+      "processes-active",
+      "process-check-selected",
+      "generic-detail",
+      "generic-back",
+      "process-build-selected",
+      "sdd-detail",
+      "timeline",
+      "timeline-back",
+      "overview-back",
+    ]);
+    expect(result.semanticEvidence).toEqual([
+      "Processes [active] | process-build | reported",
+      "Timeline | Processes | process-build | timestamps unavailable | normalized contract",
+    ]);
+    expect(result.exitCode).toBe(0);
+    expect(result.cleanup).toEqual({
+      killSent: false,
+      noLeaks: true,
+      terminalClosed: true,
+      termSent: false,
+    });
   });
 
   test("attributes missing executable assets before launching a PTY", async () => {

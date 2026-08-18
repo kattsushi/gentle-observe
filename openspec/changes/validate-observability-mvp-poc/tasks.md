@@ -56,9 +56,9 @@ Boundaries: issue-first, CI, `tuicr` before push, 800 lines/slice only with an e
 - [x] 3.1 **RED:** add navigation tests for keys, resize selection, specialized/generic detail, timeline, experimental-token unsupported view.
 - [x] 3.2 **GREEN:** create `src/ui/{AgentDetail,ProcessDetail,Timeline,state,navigation}.tsx` with tagged views/back stack and contract rendering.
 - [x] 3.3 **RED/GREEN:** add the Termcn adoption guardrail, then use official copy-owned OpenTUI `Stack`/`Columns`/`KeyValue`; preserve immutable projection/React-local navigation and exclude runtime packages and keyboard ownership.
-- [ ] 4.1 extend executable PTY tests for Linux x64 demo, default no-fake path, navigation, cleanup.
-- [ ] 4.2 create profile exercises, metrics, decision; capture payload-free comprehension, navigation, usefulness.
-- [ ] 4.3 **GATE:** stop after 3–5 users; do not execute Slice 5 unless both profile records say **continue**.
+- [x] 4.1 extend executable PTY tests for Linux x64 demo, default no-fake path, navigation, cleanup.
+- [x] 4.2 create profile exercises, metrics, decision; capture payload-free comprehension, navigation, usefulness.
+- [ ] 4.3 **GATE:** pending 3–5 real users and both human profile decisions; Live is ineligible unless both profile records say **continue**.
 
 ## Reactivity Boundary — Official Atom React
 
