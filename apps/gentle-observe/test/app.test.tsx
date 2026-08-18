@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { testRender } from "@opentui/solid";
+import { RegistryProvider, useAtomSet } from "@effect/atom-react";
+import { testRender } from "@opentui/react/test-utils";
 import { Effect } from "effect";
+import * as Atom from "effect/unstable/reactivity/Atom";
 
 import { App } from "../src/app";
 import { acquireProjection } from "../src/ui/projection";
@@ -10,10 +12,18 @@ describe("truthful discovery shell", () => {
     const projection = await Effect.runPromise(
       acquireProjection({ demo: true, scenario: "degraded" }),
     );
-    const rendered = await testRender(() => <App projection={projection} />, {
-      width: 50,
-      height: 14,
-    });
+    const projectionAtom = Atom.make(projection);
+    let setProjection: ((value: typeof projection) => void) | undefined;
+    const Harness = () => {
+      setProjection = useAtomSet(projectionAtom);
+      return <App onQuit={() => rendered.renderer.destroy()} projection={projectionAtom} />;
+    };
+    const rendered = await testRender(
+      <RegistryProvider>
+        <Harness />
+      </RegistryProvider>,
+      { width: 50, height: 14 },
+    );
 
     try {
       const frame = await rendered.waitForFrame(
@@ -23,6 +33,16 @@ describe("truthful discovery shell", () => {
 
       expect(frame).toContain("Processes: unavailable | demo");
       expect(frame).toContain("q quit");
+
+      const unavailable = await Effect.runPromise(
+        acquireProjection({ demo: false, scenario: "normal" }),
+      );
+      if (setProjection === undefined) throw new Error("Atom setter was not mounted");
+      setProjection(unavailable);
+      const updated = await rendered.waitForFrame((candidate) =>
+        candidate.includes("Runtime: unavailable | source unavailable"),
+      );
+      expect(updated).not.toContain("DEMO DATA");
     } finally {
       rendered.renderer.destroy();
     }
@@ -32,10 +52,19 @@ describe("truthful discovery shell", () => {
     const projection = await Effect.runPromise(
       acquireProjection({ demo: false, scenario: "normal" }),
     );
-    const rendered = await testRender(() => <App projection={projection} />, {
-      width: 50,
-      height: 14,
-    });
+    let quitCount = 0;
+    const rendered = await testRender(
+      <RegistryProvider>
+        <App
+          onQuit={() => {
+            quitCount += 1;
+            rendered.renderer.destroy();
+          }}
+          projection={Atom.make(projection)}
+        />
+      </RegistryProvider>,
+      { width: 50, height: 14 },
+    );
 
     try {
       const frame = await rendered.waitForFrame((candidate) =>
@@ -52,6 +81,7 @@ describe("truthful discovery shell", () => {
       await rendered.waitFor(() => rendered.renderer.isDestroyed);
 
       expect(rendered.renderer.isDestroyed).toBe(true);
+      expect(quitCount).toBe(1);
     } finally {
       rendered.renderer.destroy();
     }
