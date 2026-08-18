@@ -13,10 +13,10 @@ const sourceLabel = (source: Pick<ShellProjection["runtime"], "health" | "proven
   }`;
 
 export const AppShell = ({ children, projection }: AppShellProps) => (
-  <box flexDirection="column" padding={1}>
+  <box flexDirection="column">
     {projection.demo ? <text>DEMO DATA</text> : undefined}
     <text>Runtime: {sourceLabel(projection.runtime)}</text>
-    <text>Processes: {sourceLabel(projection.processes)}</text>
+    <text>Processes: {sourceLabel(projection.processes)} | q quit</text>
     {children}
   </box>
 );
