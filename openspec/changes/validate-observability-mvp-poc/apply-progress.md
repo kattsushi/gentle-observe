@@ -42,6 +42,15 @@ Line accounting: 122 changed lines (120 added, 2 deleted), below the 180-line PR
 - Corrected verification findings: formatting and stale selection/detail-route resurrection. React `act` warnings remain non-failing.
 - Only 2.1b/2.2b are complete; Details, Timeline, Live, persistence, and refresh remain deferred.
 
+## Slice 3 / PR3 Details + Timeline
+
+- [x] Tagged `Overview`/`AgentDetail`/`ProcessDetail`/`Timeline` views use a valid back stack, numeric/navigation keys, and exact-ID route/history reconciliation with no retarget or resurrection.
+- Agent facts are `observed`; Process facts are `reported`, with SDD type-only specialization/generic fallback, source-level token states, a bounded no-timestamp Timeline, standard/`50x14` layouts, and persistent demo/source facts.
+- Strict TDD (Bun 1.3.14): initial focused RED had 2 semantic failures on unavailable Details/Timeline; final focused was 4/29; configured app was 15/55; 50 unique tests passed, 0 failed.
+- Typecheck, lint, format, quality, build, e2e, and native `q`/non-retention checks passed on Bun 1.3.14; manifests and lockfile are unchanged.
+- Corrected independent finding: generic ID/type must not become canonical-name/category authority; the final compact check passed. React `act` warnings remain non-failing.
+- Task 4.1 PTY navigation remains deferred; no Termcn, Live, or dependency changes were made.
+
 ## Slice 2C / PR2C React Renderer Boundary
 
 - [x] React JSX/OpenTUI ordinary Bun compilation and explicit root lifecycle ownership.

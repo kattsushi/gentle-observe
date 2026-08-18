@@ -28,7 +28,7 @@ Chain strategy: feature-branch-chain
 
 Use official `github/gh-stack`: `submit` links bases; `sync`/`rebase` preserve ancestry; `view` visualizes. Do not `merge`/merge tracker/create B before gate; final tracker integration alone reaches master.
 
-Boundaries: issue-first, CI, `tuicr` before push, 800 lines/slice, RDD/native review disabled. `.git/gh-stack` stays local/uncommitted; no planning mutation.
+Boundaries: issue-first, CI, `tuicr` before push, 800 lines/slice only with an explicit maintainer-approved exception, RDD/native review disabled. `.git/gh-stack` stays local/uncommitted; no planning mutation.
 
 ### PR2A / PR2B / PR2C / PR2D Child Boundaries
 
@@ -53,8 +53,8 @@ Boundaries: issue-first, CI, `tuicr` before push, 800 lines/slice, RDD/native re
 - [x] 2.2r **GREEN:** in PR2C, migrate the Solid/OpenTUI runtime to React/OpenTUI; PR2D owns Overview/navigation.
 - [x] 2.1b **RED:** add Overview tests for Runtime/Processes switching, compact non-color labels, selection, and `Enter`/`Esc` navigation.
 - [x] 2.2b **GREEN:** create `src/ui/{projection,AppShell,Overview,layout}.tsx` with stable immutable props and framework-local navigation/selection state; no Atom-shaped abstraction.
-- [ ] 3.1 **RED:** add navigation tests for keys, resize selection, specialized/generic detail, timeline, experimental-token unsupported view.
-- [ ] 3.2 **GREEN:** create `src/ui/{AgentDetail,ProcessDetail,Timeline,state,navigation}.tsx` with tagged views/back stack and contract rendering.
+- [x] 3.1 **RED:** add navigation tests for keys, resize selection, specialized/generic detail, timeline, experimental-token unsupported view.
+- [x] 3.2 **GREEN:** create `src/ui/{AgentDetail,ProcessDetail,Timeline,state,navigation}.tsx` with tagged views/back stack and contract rendering.
 - [ ] 4.1 extend executable PTY tests for Linux x64 demo, default no-fake path, navigation, cleanup.
 - [ ] 4.2 create profile exercises, metrics, decision; capture payload-free comprehension, navigation, usefulness.
 - [ ] 4.3 **GATE:** stop after 3–5 users; do not execute Slice 5 unless both profile records say **continue**.

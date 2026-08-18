@@ -49,12 +49,10 @@ describe("truthful discovery shell", () => {
     }
   });
 
-  test("preserves plane selection through navigation, resize, and stale Atom updates", async () => {
-    const projection = await Effect.runPromise(
-      acquireProjection({ demo: true, scenario: "complex" }),
-    );
-    const projectionAtom = Atom.make(projection);
-    let setProjection: ((value: typeof projection) => void) | undefined;
+  test("drills through bounded process detail and timeline without reviving a removed generic route", async () => {
+    const complex = await Effect.runPromise(acquireProjection({ demo: true, scenario: "complex" }));
+    const projectionAtom = Atom.make(complex);
+    let setProjection: ((value: typeof complex) => void) | undefined;
     const Harness = () => {
       setProjection = useAtomSet(projectionAtom);
       return <App onQuit={() => rendered.renderer.destroy()} projection={projectionAtom} />;
@@ -63,82 +61,145 @@ describe("truthful discovery shell", () => {
       <RegistryProvider>
         <Harness />
       </RegistryProvider>,
-      { width: 90, height: 24 },
+      {
+        width: 90,
+        height: 24,
+      },
     );
-    const settle = (input: () => void) => act(() => (input(), rendered.flush()));
-    const runtimeFrame = (agent: string) =>
-      rendered.waitForFrame(
-        (candidate) => candidate.includes("Runtime [active]") && candidate.includes(`> ${agent}`),
-      );
+    const settle = async (input: () => void | Promise<void>) => {
+      await act(async () => {
+        await input();
+        await rendered.flush();
+      });
+    };
+    const update = async (next: typeof complex) => {
+      if (setProjection === undefined) throw new Error("Atom setter was not mounted");
+      await act(async () => {
+        setProjection?.(next);
+        await rendered.flush();
+      });
+    };
 
     try {
-      expect(await runtimeFrame("agent-alpha")).toContain("observed running");
-      await settle(() => rendered.mockInput.pressArrow("down"));
-      const selectedRuntime = await rendered.waitForFrame(
-        (candidate) => candidate.includes("> agent-beta") && candidate.includes("observed idle"),
-      );
-      expect(selectedRuntime).toContain("DEMO DATA");
       await settle(() => rendered.mockInput.pressTab());
-      await rendered.waitForFrame(
-        (candidate) =>
-          candidate.includes("Processes [active]") && candidate.includes("> process-build"),
-      );
-      await rendered.mockInput.pressKeys(["j"]);
-      const selectedProcess = await rendered.waitForFrame(
-        (candidate) =>
-          candidate.includes("> process-check") && candidate.includes("reported active"),
-      );
-      expect(selectedProcess).toContain("Tab plane");
       await settle(() => rendered.mockInput.pressEnter());
-      const boundary = await rendered.waitForFrame((candidate) =>
-        candidate.includes("Detail view is not available in this build."),
+      const sdd = await rendered.waitForFrame((frame) =>
+        frame.includes("Process Detail | process-build"),
       );
-      expect(boundary).toContain("Processes | process-check");
-      expect(boundary).not.toContain("durationMs");
-      await settle(() => rendered.mockInput.pressEscape());
+      expect(sdd).toContain("SDD specialization");
+      expect(sdd).toContain("reported active");
+      expect(sdd).toContain("Token usage: unsupported");
+      expect(sdd).toContain(
+        "SDD specialization: phase/progress/artifacts/attempts/dependencies/Strict TDD",
+      );
+      expect(sdd).toContain("unavailable");
+      expect(sdd).toContain("not runtime liveness and gives no delivery authority");
+      expect(sdd).not.toMatch(/cost|private/i);
+      await settle(() => rendered.mockInput.pressKeys(["2"]));
+      await rendered.waitForFrame((frame) =>
+        frame.includes("Timeline | Processes | process-build"),
+      );
       rendered.resize(50, 14);
       const compact = await rendered.waitForFrame(
-        (candidate) =>
-          candidate.includes("DEMO DATA") &&
-          candidate.includes("Processes [active]") &&
-          candidate.includes("> process-check"),
+        (frame) =>
+          frame.includes("DEMO DATA") &&
+          frame.includes("timestamps unavailable in normalized contract"),
       );
-      expect(compact).toContain("reported active");
-      expect(compact).toContain("Tab plane");
-      await settle(() => rendered.mockInput.pressTab());
-      expect(await runtimeFrame("agent-beta")).toContain("observed idle");
-      if (setProjection === undefined) throw new Error("Atom setter was not mounted");
-      const updateProjection = setProjection;
-      const update = (next: typeof projection) =>
-        act(async () => {
-          updateProjection(next);
-          await rendered.flush();
-        });
+      expect(compact).toContain("source: demo / demo-v1");
+      await settle(async () => {
+        await rendered.mockInput.pressKeys(["ESCAPE"]);
+        await Bun.sleep(30);
+      });
+      await rendered.waitForFrame((frame) => frame.includes("Process Detail | process-build"));
+      await settle(() => rendered.mockInput.pressKeys(["1"]));
+      await settle(() => rendered.mockInput.pressKeys(["j"]));
+      await settle(() => rendered.mockInput.pressKeys(["5"]));
+      const generic = await rendered.waitForFrame((frame) =>
+        frame.includes("Process Detail | process-check"),
+      );
+      expect(generic).toContain("DEMO DATA");
+      expect(generic).toContain("id: process-check | type: generic");
+      expect(generic).toContain("canonical name/category/version: unavailable");
+      expect(generic).toContain("specialized semantics: unavailable");
+      expect(generic).not.toContain("generic canonical process-check | category generic");
+      expect(generic).not.toContain("SDD specialization");
       await update(await Effect.runPromise(acquireProjection({ demo: true, scenario: "normal" })));
-      const fallback = await runtimeFrame("agent-alpha");
-      expect(fallback).toContain("observed running");
-      expect(fallback).not.toContain("> agent-beta");
-      await update(projection);
-      expect(await runtimeFrame("agent-alpha")).not.toContain("> agent-beta");
-      await settle(() => rendered.mockInput.pressEnter());
       await rendered.waitForFrame(
-        (candidate) =>
-          candidate.includes("Detail view is not available in this build.") &&
-          candidate.includes("Runtime | agent-alpha"),
+        (frame) => frame.includes("Processes [active]") && frame.includes("process-build"),
       );
-      const unavailable = await Effect.runPromise(
-        acquireProjection({ demo: false, scenario: "normal" }),
+      await update(complex);
+      const restored = await rendered.waitForFrame((frame) => frame.includes("Processes [active]"));
+      expect(restored).not.toContain("Process Detail | process-check");
+    } finally {
+      rendered.renderer.destroy();
+    }
+  });
+
+  test("renders source-level runtime token states while valid routes survive and stale routes are discarded", async () => {
+    const normal = await Effect.runPromise(acquireProjection({ demo: true, scenario: "normal" }));
+    const projectionAtom = Atom.make(normal);
+    let setProjection: ((value: typeof normal) => void) | undefined;
+    const Harness = () => {
+      setProjection = useAtomSet(projectionAtom);
+      return <App onQuit={() => rendered.renderer.destroy()} projection={projectionAtom} />;
+    };
+    const rendered = await testRender(
+      <RegistryProvider>
+        <Harness />
+      </RegistryProvider>,
+      {
+        width: 50,
+        height: 14,
+      },
+    );
+    const settle = async (input: () => void | Promise<void>) => {
+      await act(async () => {
+        await input();
+        await rendered.flush();
+      });
+    };
+    const update = async (next: typeof normal) => {
+      if (setProjection === undefined) throw new Error("Atom setter was not mounted");
+      await act(async () => {
+        setProjection?.(next);
+        await rendered.flush();
+      });
+    };
+
+    try {
+      await settle(() => rendered.mockInput.pressKeys(["3"]));
+      const supported = await rendered.waitForFrame((frame) =>
+        frame.includes("Agent Detail | agent-alpha"),
       );
-      await update(unavailable);
-      const overview = await rendered.waitForFrame(
-        (candidate) =>
-          candidate.includes("Runtime has no records.") &&
-          candidate.includes("Runtime: unavailable | source unavailable"),
+      expect(supported).toContain("Token usage: supported input 20 output 10");
+      await settle(() => rendered.mockInput.pressKeys(["2"]));
+      await rendered.waitForFrame((frame) => frame.includes("Timeline | Runtime | agent-alpha"));
+      await settle(async () => {
+        await rendered.mockInput.pressKeys(["ESCAPE"]);
+        await Bun.sleep(30);
+      });
+      await rendered.waitForFrame((frame) => frame.includes("Agent Detail | agent-alpha"));
+      await settle(() => rendered.mockInput.pressKeys(["2"]));
+      await settle(() => rendered.mockInput.pressEnter());
+      await rendered.waitForFrame((frame) => frame.includes("Agent Detail | agent-alpha"));
+      await update(await Effect.runPromise(acquireProjection({ demo: true, scenario: "complex" })));
+      const missing = await rendered.waitForFrame((frame) =>
+        frame.includes("Token usage: missing"),
       );
-      expect(overview).not.toContain("Detail view is not available in this build.");
-      await update(projection);
-      const reopened = await runtimeFrame("agent-alpha");
-      expect(reopened).not.toContain("Detail view is not available in this build.");
+      expect(missing).toContain("observed running");
+      await update(
+        await Effect.runPromise(acquireProjection({ demo: true, scenario: "degraded" })),
+      );
+      const unsupported = await rendered.waitForFrame((frame) =>
+        frame.includes("Token usage: unsupported"),
+      );
+      expect(unsupported).toContain("observed failed");
+      await update(await Effect.runPromise(acquireProjection({ demo: false, scenario: "normal" })));
+      await rendered.waitForFrame((frame) => frame.includes("Runtime has no records."));
+      await update(normal);
+      const restored = await rendered.waitForFrame((frame) => frame.includes("Runtime [active]"));
+      expect(restored).not.toContain("Agent Detail | agent-alpha");
+      expect(restored).not.toContain("Timeline | Runtime | agent-alpha");
     } finally {
       rendered.renderer.destroy();
     }
