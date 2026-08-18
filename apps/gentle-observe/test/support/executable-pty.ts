@@ -10,6 +10,7 @@ type Stage =
   | "cleanup"
   | "environment"
   | "exit-code"
+  | "interaction"
   | "non-tty"
   | "readiness"
   | "timeout"
@@ -41,17 +42,37 @@ interface ProcessResult {
   readonly output: string;
 }
 
+interface PtyResult extends ProcessResult {
+  readonly cleanup: CleanupEvidence;
+  readonly cwd: string;
+}
+
+interface PtyOptions {
+  readonly cols?: number;
+  readonly deadlineMs?: number;
+  readonly interaction?: (writeAndWait: WriteAndWait) => Promise<void>;
+  readonly readiness?: (output: string) => boolean;
+  readonly readinessText?: string;
+  readonly rows?: number;
+}
+
+type WriteAndWait = (
+  input: string,
+  marker: string,
+  predicate: (output: string) => boolean,
+  options?: { readonly parserGuardMs?: 30 },
+) => Promise<void>;
+
 export interface ExecutableProof {
-  readonly demoPty: ProcessResult & {
-    readonly cleanup: CleanupEvidence;
-    readonly cwd: string;
-  };
+  readonly demoPty: PtyResult;
   readonly nonTty: ProcessResult;
-  readonly pty: ProcessResult & {
-    readonly cleanup: CleanupEvidence;
-    readonly cwd: string;
-  };
+  readonly pty: PtyResult;
   readonly version: ProcessResult;
+}
+
+export interface CompiledNavigationProof extends PtyResult {
+  readonly semanticEvidence: ReadonlyArray<string>;
+  readonly steps: ReadonlyArray<string>;
 }
 
 const unavailableCleanup: CleanupEvidence = {
@@ -135,6 +156,42 @@ export const normalizeAnsi = (output: string) => {
 
   return normalized;
 };
+
+const redraw = (output: string, cols: number, rows: number) => {
+  const screen = Array.from({ length: rows }, () => Array<string>(cols).fill(" "));
+  let column = 0;
+  let row = 0;
+
+  for (let index = 0; index < output.length;) {
+    if (output[index] !== escape) {
+      if (output[index] >= " " && screen[row]?.[column] !== undefined)
+        screen[row][column++] = output[index];
+      index += 1;
+      continue;
+    }
+    const type = output[index + 1];
+    if (type !== "[") {
+      index += 2;
+      continue;
+    }
+    const end = output.slice(index + 2).search(/[\x40-\x7e]/) + index + 2;
+    if (end < index + 2) break;
+    if (output[end] === "H") {
+      const [nextRow = 1, nextColumn = 1] = output
+        .slice(index + 2, end)
+        .split(";")
+        .map((value) => Number(value) || 1);
+      row = nextRow - 1;
+      column = nextColumn - 1;
+    }
+    index = end + 1;
+  }
+
+  return screen.map((line) => line.join("")).join("\n");
+};
+
+const occurrences = (output: string, marker: string) =>
+  marker === "" ? 0 : output.split(marker).length - 1;
 
 const commandResult = (
   command: ReadonlyArray<string>,
@@ -231,12 +288,8 @@ const waitForReadiness = (ready: Promise<void>, child: Bun.Subprocess, deadlineM
     };
 
     void ready.then(
-      () => {
-        finish(resolve);
-      },
-      (cause) => {
-        finish(() => reject(cause));
-      },
+      () => finish(resolve),
+      (cause) => finish(() => reject(cause)),
     );
     void child.exited.then(
       (exitCode) => finish(() => resolve(exitCode)),
@@ -320,30 +373,36 @@ const cleanupChild = async (child: Bun.Subprocess): Promise<CleanupEvidence> => 
 const runPty = async (
   command: ReadonlyArray<string>,
   environment: IsolatedEnvironment,
-  deadlineMs = defaultDeadlineMs,
-  readinessText = "Runtime: unavailable | source unavailable",
-): Promise<ProcessResult & { readonly cleanup: CleanupEvidence; readonly cwd: string }> => {
+  options: PtyOptions = {},
+): Promise<PtyResult> => {
+  const deadlineMs = options.deadlineMs ?? defaultDeadlineMs;
+  const readiness =
+    options.readiness ??
+    ((output) =>
+      output.includes(options.readinessText ?? "Runtime: unavailable | source unavailable"));
   let capture = new Uint8Array();
-  let readyOutput = "";
+  let observeOutput: ((output: string) => void) | undefined;
   let resolveReady: (() => void) | undefined;
   const ready = new Promise<void>((resolve) => {
     resolveReady = resolve;
   });
+  const cols = options.cols ?? 80;
+  const rows = options.rows ?? 24;
+  const output = () => normalizeAnsi(textDecoder.decode(capture));
+  const observedOutput = () => `${output()}\n${redraw(textDecoder.decode(capture), cols, rows)}`;
   const child = Bun.spawn([...command], {
     cwd: environment.cwd,
     env: environment.env,
     terminal: {
-      cols: 80,
+      cols,
       data: (_terminal, data) => {
         capture = appendCapture(capture, data);
-        const normalized = normalizeAnsi(textDecoder.decode(capture));
-        if (normalized.includes(readinessText)) {
-          readyOutput = normalized;
-          resolveReady?.();
-        }
+        const observed = observedOutput();
+        if (readiness(observed)) resolveReady?.();
+        observeOutput?.(observed);
       },
       name: "xterm-256color",
-      rows: 24,
+      rows,
     },
   });
   let failure:
@@ -359,12 +418,38 @@ const runPty = async (
         stage: "environment",
       };
     } else {
+      const writeAndWait: WriteAndWait = async (input, marker, predicate, guard = {}) => {
+        const baseline = occurrences(observedOutput(), marker);
+        const fresh = new Promise<void>((resolve) => {
+          observeOutput = (candidate) => {
+            if (occurrences(candidate, marker) > baseline && predicate(candidate)) {
+              observeOutput = undefined;
+              resolve();
+            }
+          };
+        });
+        child.terminal?.write(input);
+        if (guard.parserGuardMs !== undefined) await Bun.sleep(guard.parserGuardMs);
+        try {
+          const observed = await waitForReadiness(fresh, child, deadlineMs);
+          if (typeof observed === "number") {
+            throw new Error(`PTY child exited ${observed} during interaction.`);
+          }
+        } catch (cause) {
+          throw new Error(
+            `Fresh marker ${marker} did not satisfy its interaction predicate: ${
+              cause instanceof Error ? cause.message : "unknown wait failure"
+            }`,
+          );
+        }
+      };
+
       try {
-        const readiness = await waitForReadiness(ready, child, deadlineMs);
-        if (typeof readiness === "number") {
+        const observed = await waitForReadiness(ready, child, deadlineMs);
+        if (typeof observed === "number") {
           failure = {
             cause: child,
-            message: `[exit-code] PTY child exited ${readiness} before readiness.`,
+            message: `[exit-code] PTY child exited ${observed} before readiness.`,
             stage: "exit-code",
           };
         }
@@ -374,6 +459,20 @@ const runPty = async (
           message: `[readiness] PTY readiness was not observed within ${deadlineMs}ms.`,
           stage: "readiness",
         };
+      }
+
+      if (failure === undefined && options.interaction !== undefined) {
+        try {
+          await options.interaction(writeAndWait);
+        } catch (cause) {
+          failure = {
+            cause,
+            message: `[interaction] PTY navigation did not reach fresh output: ${
+              cause instanceof Error ? cause.message : "unknown interaction failure"
+            }`,
+            stage: "interaction",
+          };
+        }
       }
 
       if (failure === undefined) {
@@ -424,14 +523,12 @@ const runPty = async (
     });
   }
 
-  if (failure !== undefined) {
-    throw new PtyE2eError({ ...failure, cleanup });
-  }
+  if (failure !== undefined) throw new PtyE2eError({ ...failure, cleanup });
 
-  return { cleanup, cwd: environment.cwd, exitCode: 0, output: readyOutput };
+  return { cleanup, cwd: environment.cwd, exitCode: 0, output: observedOutput() };
 };
 
-export const runExecutableProof = async ({ artifactPath }: { readonly artifactPath: string }) => {
+const assertAsset = (artifactPath: string) => {
   const asset = Bun.spawnSync({ cmd: ["test", "-x", artifactPath], cwd: "/tmp", env: Bun.env });
   if (asset.exitCode !== 0) {
     throw new PtyE2eError({
@@ -441,16 +538,24 @@ export const runExecutableProof = async ({ artifactPath }: { readonly artifactPa
       stage: "asset",
     });
   }
+};
+
+const relocate = (artifactPath: string, environment: IsolatedEnvironment) => {
+  const relocated = `${environment.artifactDirectory}/gentle-observe`;
+  commandResult(
+    ["cp", "--preserve=mode", artifactPath, relocated],
+    environment.cwd,
+    environment.env,
+  );
+  return relocated;
+};
+
+export const runExecutableProof = async ({ artifactPath }: { readonly artifactPath: string }) => {
+  assertAsset(artifactPath);
   const environment = makeIsolatedEnvironment();
 
   try {
-    const relocated = `${environment.artifactDirectory}/gentle-observe`;
-    commandResult(
-      ["cp", "--preserve=mode", artifactPath, relocated],
-      environment.cwd,
-      environment.env,
-    );
-
+    const relocated = relocate(artifactPath, environment);
     const version = await runNonTty(relocated, ["--version"], environment);
     if (version.exitCode !== 0 || version.output !== "gentle-observe 0.1.0\n") {
       throw new PtyE2eError({
@@ -472,13 +577,81 @@ export const runExecutableProof = async ({ artifactPath }: { readonly artifactPa
     }
 
     const pty = await runPty([relocated], environment);
-    const demoPty = await runPty(
-      [relocated, "--demo", "--scenario", "normal"],
-      environment,
-      defaultDeadlineMs,
-      "DEMO DATA",
-    );
+    const demoPty = await runPty([relocated, "--demo", "--scenario", "normal"], environment, {
+      readinessText: "DEMO DATA",
+    });
     return { demoPty, nonTty, pty, version } satisfies ExecutableProof;
+  } finally {
+    removeIsolatedEnvironment(environment);
+  }
+};
+
+export const runCompiledNavigationProof = async ({
+  artifactPath,
+}: {
+  readonly artifactPath: string;
+}) => {
+  assertAsset(artifactPath);
+  const environment = makeIsolatedEnvironment();
+  const semanticEvidence: string[] = [];
+  const steps: string[] = [];
+
+  try {
+    const relocated = relocate(artifactPath, environment);
+    const result = await runPty([relocated, "--demo", "--scenario", "complex"], environment, {
+      cols: 50,
+      readiness: (output) =>
+        output.includes("DEMO DATA") &&
+        output.includes("Runtime [active]") &&
+        output.includes("> agent-alpha | observed running"),
+      rows: 14,
+      interaction: async (writeAndWait) => {
+        await writeAndWait(
+          "\x09",
+          "reported",
+          (output) => output.includes("Processes [active]") && output.includes("process-build"),
+        );
+        semanticEvidence.push("Processes [active] | process-build | reported");
+        steps.push("processes-active");
+        await writeAndWait("j", ">", () => true);
+        steps.push("process-check-selected");
+        await writeAndWait(
+          "\x0d",
+          ">ProcessDetail",
+          (output) =>
+            output.includes("id:process-check|type:generic") &&
+            output.includes("specializedsemantics:unavailable"),
+        );
+        steps.push("generic-detail");
+        await writeAndWait("\x1b", ">", () => true, { parserGuardMs: 30 });
+        steps.push("generic-back");
+        await writeAndWait("k", ">", () => true);
+        steps.push("process-build-selected");
+        await writeAndWait("\x0d", "SDD:", (output) =>
+          output.includes(
+            "SDD:phase/progress/artifacts/attempts/dependencies/StrictTDDunavailable",
+          ),
+        );
+        steps.push("sdd-detail");
+        await writeAndWait(
+          "2",
+          "timestamps unavailable",
+          (output) =>
+            output.includes("Timeline | Processes | process-build") &&
+            output.includes("timestamps unavailable") &&
+            output.includes("normalized contract"),
+        );
+        semanticEvidence.push(
+          "Timeline | Processes | process-build | timestamps unavailable | normalized contract",
+        );
+        steps.push("timeline");
+        await writeAndWait("\x1b", "SDD:", () => true, { parserGuardMs: 30 });
+        steps.push("timeline-back");
+        await writeAndWait("\x1b", ">", () => true, { parserGuardMs: 30 });
+        steps.push("overview-back");
+      },
+    });
+    return { ...result, semanticEvidence, steps } satisfies CompiledNavigationProof;
   } finally {
     removeIsolatedEnvironment(environment);
   }
@@ -488,7 +661,9 @@ export const runTimeoutCleanupProof = async () => {
   const environment = makeIsolatedEnvironment();
 
   try {
-    return await runPty(["/bin/sh", "-c", "trap '' TERM; while :; do :; done"], environment, 100);
+    return await runPty(["/bin/sh", "-c", "trap '' TERM; while :; do :; done"], environment, {
+      deadlineMs: 100,
+    });
   } finally {
     removeIsolatedEnvironment(environment);
   }
