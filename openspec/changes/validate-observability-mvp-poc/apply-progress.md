@@ -51,6 +51,19 @@ Line accounting: 122 changed lines (120 added, 2 deleted), below the 180-line PR
 - Corrected independent finding: generic ID/type must not become canonical-name/category authority; the final compact check passed. React `act` warnings remain non-failing.
 - Task 4.1 PTY navigation remains deferred; no Termcn, Live, or dependency changes were made.
 
+## Slice 3.5 / PR3.5 Termcn Adoption
+
+- [x] Official copy-owned Termcn OpenTUI `Stack`/`Columns`/`KeyValue` adoption is complete before Demo Gate; immutable projection and React-local navigation remain the authority boundary.
+- Pinned `shadcn-labs/termcn@628dd0bf88ba191907661a0fe80491be08302781`; shadcn 4.3.0 dry-run made zero mutations, and the MIT notice records six local sources/support files: `src/components/ui/{stack.tsx,columns.tsx,key-value.tsx,types.ts}`, `src/hooks/use-theme.ts`, and `src/lib/terminal-themes/default.ts`.
+- Oxfmt-normalized SHA-256: `stack.tsx=1effdabbbce73f8b777e39fd04b49a18f654cbae524737fb4ea3d86ba18fbb01`; `columns.tsx=d2892729a01fcb155bea46ace87309c1c2572e8d14c21c04f22d4caf9e7e7abf`; `key-value.tsx=132c4506c0871b91b1659b7374a53335228e79b58469becca3b588841f089abe`.
+- Oxfmt-normalized SHA-256: `types.ts=c0950d0e4fafd04295f7a9b20409715c8cdc8e510eefab9059b899f94f016ac5`; `use-theme.ts=a9b07350eee38f9718025d0aac9cef6474e16a5a46e817417ef17b822ca54f0c`; `default.ts=6056ea0bf72a9c5a151cea58b1d59cea0c57b99c8a381b1176061cc59a216f97`; Stack has the local `BoxProps` correction.
+- Stack covers all routes; Columns covers standard source health; KeyValue covers standard Agent/Process/Timeline; compact `50x14` is unchanged, with no keyboard or domain authority.
+- TypeScript 7 uses the app-local paths alias without the removed `baseUrl`; the configured app target includes the adoption guardrail.
+- Strict RED observed four semantic adoption failures while existing app tests passed; final configured app: 20 tests; final total: 55 unique tests, 0 failures. Typecheck, lint, format, quality, build, e2e, and narrow `q`/non-retention checks passed; the app manifest is script-only and root manifest/lock are unchanged.
+- Corrected blockers: TS7 `baseUrl`, formatting/provenance drift, and configured-target omission. A transient `q` timeout did not reproduce in three isolated runs; the final immediate rerun passed.
+- No Termcn/shadcn/Ink dependency, Table/Tabs/Termcn AppShell/Panel/Tag/provider, Solid recheck, or Live/domain changes.
+- Maintainer-approved 800-line exception applies only to this PR3.5 slice; existing global boundary wording remains unchanged.
+
 ## Slice 2C / PR2C React Renderer Boundary
 
 - [x] React JSX/OpenTUI ordinary Bun compilation and explicit root lifecycle ownership.

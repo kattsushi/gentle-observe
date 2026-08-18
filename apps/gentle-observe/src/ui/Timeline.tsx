@@ -1,3 +1,5 @@
+import { KeyValue } from "@/components/ui/key-value";
+
 import type { OverviewPlane } from "./Overview";
 import type { ShellProjection } from "./projection";
 
@@ -9,10 +11,12 @@ const sourceFor = (projection: ShellProjection, plane: OverviewPlane) =>
   plane === "runtime" ? projection.runtime : projection.processes;
 
 export const Timeline = ({
+  compact,
   plane,
   projection,
   record,
 }: {
+  readonly compact: boolean;
   readonly plane: OverviewPlane;
   readonly projection: ShellProjection;
   readonly record: TimelineRecord;
@@ -20,7 +24,7 @@ export const Timeline = ({
   const source = sourceFor(projection, plane);
   const status = plane === "runtime" ? `observed ${record.status}` : `reported ${record.status}`;
 
-  return (
+  return compact ? (
     <>
       <text>
         Timeline | {plane === "runtime" ? "Runtime" : "Processes"} | {record.id}
@@ -39,6 +43,28 @@ export const Timeline = ({
         source: {source.provenance.kind} / {source.provenance.adapterVersion} | freshness{" "}
         {source.freshness}
       </text>
+      <text>missingness {source.missingness} | Enter detail | Esc back</text>
+    </>
+  ) : (
+    <>
+      <text>
+        Timeline | {plane === "runtime" ? "Runtime" : "Processes"} | {record.id}
+      </text>
+      <KeyValue
+        items={[
+          { key: "identity", value: `repo ${record.repoId} | session ${record.sessionId}` },
+          { key: "status", value: `${status} | duration ${record.durationMs}ms` },
+          {
+            key: "steps",
+            value: record.steps.map((step) => `${step.id} (${step.status})`).join(", ") || "none",
+          },
+          {
+            key: "source",
+            value: `${source.provenance.kind} / ${source.provenance.adapterVersion} | freshness ${source.freshness}`,
+          },
+        ]}
+      />
+      <text>timestamps unavailable in normalized contract</text>
       <text>missingness {source.missingness} | Enter detail | Esc back</text>
     </>
   );
