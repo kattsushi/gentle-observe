@@ -12,7 +12,7 @@ import { readPiSession, LiveSourceRejected } from "./pi-session";
 import { selectPiSession, type LiveSystemDependencies } from "./system";
 
 const maximumPiSessionBytes = 1_048_576;
-const gentleDeadlineMs = 5_000;
+const livePlaneDeadlineMs = 5_000;
 const maximumGentleStdoutBytes = 1_048_576;
 
 export interface LiveRuntimeOptions {
@@ -79,7 +79,7 @@ export const acquireLiveProjection = (
         run: (file, arguments_) =>
           dependencies
             .run(file, arguments_, {
-              deadlineMs: gentleDeadlineMs,
+              deadlineMs: livePlaneDeadlineMs,
               maximumStdoutBytes: maximumGentleStdoutBytes,
             })
             .pipe(Effect.mapError((error) => new GentleStatusRejected({ reason: error.reason }))),
@@ -100,11 +100,22 @@ export const acquireLiveProjection = (
   return Effect.gen(function* () {
     const runtime = yield* AgentTelemetrySource;
     const processes = yield* GentleAIProcessSource;
+    const planes = yield* Effect.all(
+      { processes: processes.snapshot(), runtime: runtime.snapshot() },
+      { concurrency: "unbounded" },
+    );
 
     return {
       demo: false,
-      processes: yield* processes.snapshot(),
-      runtime: yield* runtime.snapshot(),
+      processes: planes.processes,
+      runtime: planes.runtime,
     };
-  }).pipe(Effect.provide(makeLiveLayer({ gentle: readGentle(), pi: readPi() })));
+  }).pipe(
+    Effect.provide(
+      makeLiveLayer({
+        gentle: readGentle().pipe(Effect.timeout(livePlaneDeadlineMs)),
+        pi: readPi().pipe(Effect.timeout(livePlaneDeadlineMs)),
+      }),
+    ),
+  );
 };
