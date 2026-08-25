@@ -1,5 +1,4 @@
 import { BunRuntime, BunServices } from "@effect/platform-bun";
-import solidPlugin from "@opentui/solid/bun-plugin";
 import { Data, Effect, FileSystem, Path } from "effect";
 
 import packageMetadata from "./package.json" with { type: "json" };
@@ -41,7 +40,6 @@ const compile = Effect.fn("GentleObserveBuild.compile")(function* (
         define: {
           __GENTLE_OBSERVE_VERSION__: JSON.stringify(packageMetadata.version),
         },
-        plugins: [solidPlugin],
       }),
     catch: (cause) => compilationError(failureLogs(cause), cause),
   });

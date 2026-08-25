@@ -19,7 +19,10 @@ type StartRenderer = (options: RendererOptions) => Effect.Effect<void, CliError.
 const startInteractiveRenderer = Effect.fn("GentleObserveCli.startRenderer")(
   (options: RendererOptions) =>
     Effect.tryPromise({
-      try: async () => (await import("./tui")).startTui(options),
+      try: async () => {
+        Bun.env.DEV = "false";
+        return (await import("./tui")).startTui(options);
+      },
       catch: (cause) =>
         new CliError.UserError({
           cause,

@@ -5,8 +5,8 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "resolveJsonModule": true,
-    "jsx": "preserve",
-    "jsxImportSource": "@opentui/solid",
+    "jsx": "react-jsx",
+    "jsxImportSource": "@opentui/react",
     "types": ["bun-types"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx"]
