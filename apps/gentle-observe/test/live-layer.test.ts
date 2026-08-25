@@ -19,6 +19,7 @@ const gentle = {
       state: "partial",
     },
   ],
+  blocked: false,
   change: "live-source-spike",
   nextRecommended: "apply",
   provenance: {
@@ -94,6 +95,44 @@ describe("live source layer", () => {
         },
       ],
     });
+  });
+
+  test.each(["apply", "verify"])(
+    "projects blocked %s advice as a bounded blocked activity without raw reasons",
+    async (nextRecommended) => {
+      const [, processes] = await Effect.runPromise(
+        snapshots({
+          gentle: Effect.succeed({
+            ...gentle,
+            blocked: true,
+            blockedReasons: ["provider detail that must not leave the status reader"],
+            nextRecommended,
+          }),
+          pi: Effect.succeed(pi),
+        }),
+      );
+
+      expect(processes.records[0]).toMatchObject({ activity: "blocked", status: "waiting" });
+      expect(JSON.stringify(processes)).not.toContain("provider detail");
+    },
+  );
+
+  test.each([
+    { exists: false, expected: "idle", state: "done" },
+    { exists: true, expected: "completed", state: "done" },
+    { exists: true, expected: "idle", state: "partial" },
+    { exists: false, expected: "idle", state: "missing" },
+  ] as const)("projects $state artifacts as $expected only when they exist", async (artifact) => {
+    const [, processes] = await Effect.runPromise(
+      snapshots({
+        gentle: Effect.succeed({ ...gentle, artifacts: [{ ...gentle.artifacts[0], ...artifact }] }),
+        pi: Effect.succeed(pi),
+      }),
+    );
+
+    expect(processes.records[0]?.steps).toEqual([
+      { id: "applyProgress:0", status: artifact.expected },
+    ]);
   });
 
   test("degrades only the Pi plane when its reader fails", async () => {

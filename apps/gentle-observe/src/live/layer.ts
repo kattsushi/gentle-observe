@@ -44,14 +44,20 @@ const piProjection = (activity: PiRuntimeActivity): Runtime => ({
   ],
 });
 
-const gentleStepStatus = (state: string): "completed" | "idle" =>
-  state === "done" ? "completed" : "idle";
+const gentleStepStatus = ({
+  exists,
+  state,
+}: GentleProcessStatus["artifacts"][number]): "completed" | "idle" =>
+  exists && state === "done" ? "completed" : "idle";
+
+const gentleActivity = (status: GentleProcessStatus): string =>
+  status.blocked ? "blocked" : status.nextRecommended;
 
 const gentleProjection = (status: GentleProcessStatus): Processes => ({
   ...metadata("available"),
   records: [
     {
-      activity: status.nextRecommended,
+      activity: gentleActivity(status),
       durationMs: 0,
       id: status.change,
       parentId: null,
@@ -60,7 +66,7 @@ const gentleProjection = (status: GentleProcessStatus): Processes => ({
       status: "waiting" as const,
       steps: status.artifacts.slice(0, 2).map((artifact, index) => ({
         id: `${artifact.name}:${index}`,
-        status: gentleStepStatus(artifact.state),
+        status: gentleStepStatus(artifact),
       })),
       type: "sdd" as const,
     },
