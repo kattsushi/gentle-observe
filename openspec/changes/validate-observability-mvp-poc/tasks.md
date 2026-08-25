@@ -51,8 +51,8 @@ Boundaries: issue-first, CI, `tuicr` before push, 800 lines/slice, RDD/native re
 - [x] 2.1r **RED:** in PR2C, preserve the PR2A shell, lazy loading, `q`, and cleanup behavior in renderer/lifecycle tests.
   - Final verification runs `tui-lifecycle.test.tsx` explicitly; it is intentionally outside the configured app test target.
 - [x] 2.2r **GREEN:** in PR2C, migrate the Solid/OpenTUI runtime to React/OpenTUI; PR2D owns Overview/navigation.
-- [ ] 2.1b **RED:** add Overview tests for Runtime/Processes switching, compact non-color labels, selection, and `Enter`/`Esc` navigation.
-- [ ] 2.2b **GREEN:** create `src/ui/{projection,AppShell,Overview,layout}.tsx` with stable immutable props and framework-local navigation/selection state; no Atom-shaped abstraction.
+- [x] 2.1b **RED:** add Overview tests for Runtime/Processes switching, compact non-color labels, selection, and `Enter`/`Esc` navigation.
+- [x] 2.2b **GREEN:** create `src/ui/{projection,AppShell,Overview,layout}.tsx` with stable immutable props and framework-local navigation/selection state; no Atom-shaped abstraction.
 - [ ] 3.1 **RED:** add navigation tests for keys, resize selection, specialized/generic detail, timeline, experimental-token unsupported view.
 - [ ] 3.2 **GREEN:** create `src/ui/{AgentDetail,ProcessDetail,Timeline,state,navigation}.tsx` with tagged views/back stack and contract rendering.
 - [ ] 4.1 extend executable PTY tests for Linux x64 demo, default no-fake path, navigation, cleanup.
