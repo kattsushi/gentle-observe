@@ -32,6 +32,11 @@ const sddStatus = {
   schemaVersion: 1,
 };
 
+const v1NextRecommended = [
+  "propose spec design tasks apply review verify remediate archive",
+  "sdd-new select-change resolve-blockers resolve-review",
+].flatMap((tokens) => tokens.split(" "));
+
 const rejected = {
   error: { _tag: "GentleStatusRejected", reason: "Gentle status contract is invalid" },
   result: "failure" as const,
@@ -69,6 +74,7 @@ describe("Gentle AI status metadata adapter", () => {
             state: "partial",
           },
         ],
+        blocked: true,
         change: "live-source-spike",
         nextRecommended: "apply",
         provenance: {
@@ -92,9 +98,32 @@ describe("Gentle AI status metadata adapter", () => {
       ],
     ]);
     expect(stats).toEqual(["/workspace/repository/openspec/changes/live-source-spike/apply.md"]);
+    expect(outcome).not.toHaveProperty("value.blockedReasons");
   });
 
-  test("rejects invalid identity, store, change root, and artifact path escapes before stat", async () => {
+  test("accepts every v1 recommendation token and projects empty blockers", async () => {
+    for (const nextRecommended of v1NextRecommended) {
+      const outcome = await execute(
+        readGentleStatus(
+          {
+            now: () => new Date("2026-03-21T10:03:00.000Z"),
+            run: () =>
+              Effect.succeed({
+                stdout: JSON.stringify({ ...sddStatus, blockedReasons: [], nextRecommended }),
+              }),
+            stat: () => Effect.succeed(undefined),
+          },
+          statusRequest,
+        ),
+      );
+      expect(outcome).toMatchObject({
+        result: "success",
+        value: { blocked: false, nextRecommended },
+      });
+    }
+  });
+
+  test("rejects invalid identity, store, change root, artifact path escapes, tokens, and blockers before stat", async () => {
     const invalidStatuses = [
       { ...sddStatus, schemaName: "gentle-ai.sdd-status/v2" },
       { ...sddStatus, schemaVersion: 2 },
@@ -108,6 +137,14 @@ describe("Gentle AI status metadata adapter", () => {
           applyProgress: ["/workspace/repository/outside-change-root/apply.md"],
         },
       },
+      { ...sddStatus, nextRecommended: "" },
+      { ...sddStatus, nextRecommended: "apply this" },
+      { ...sddStatus, nextRecommended: "not-a-token" },
+      { ...sddStatus, nextRecommended: "apply\u0000" },
+      { ...sddStatus, nextRecommended: "x".repeat(1_025) },
+      { ...sddStatus, blockedReasons: "review required" },
+      { ...sddStatus, blockedReasons: [""] },
+      { ...sddStatus, blockedReasons: [0] },
     ];
 
     for (const status of invalidStatuses) {

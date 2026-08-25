@@ -32,8 +32,9 @@ export interface GentleProcessStatus {
     readonly name: string;
     readonly state: string;
   }>;
+  readonly blocked: boolean;
   readonly change: string;
-  readonly nextRecommended: string;
+  readonly nextRecommended: GentleNextRecommended;
   readonly provenance: {
     readonly contract: "gentle-ai.sdd-status/v1";
     readonly observedAt: string;
@@ -44,7 +45,23 @@ const maximumStatusBytes = 1_048_576;
 const contract = "gentle-ai.sdd-status/v1" as const;
 const changeName = /^[a-z0-9][a-z0-9._-]*$/i;
 const applyProgressStates = new Set(["missing", "partial", "done"]);
+const nextRecommendedTokens = [
+  "propose",
+  "spec",
+  "design",
+  "tasks",
+  "apply",
+  "review",
+  "verify",
+  "remediate",
+  "archive",
+  "sdd-new",
+  "select-change",
+  "resolve-blockers",
+  "resolve-review",
+] as const;
 
+export type GentleNextRecommended = (typeof nextRecommendedTokens)[number];
 type ApplyProgressState = "missing" | "partial" | "done";
 
 interface SddStatus {
@@ -58,7 +75,7 @@ interface SddStatus {
   readonly blockedReasons: ReadonlyArray<string>;
   readonly changeName: string;
   readonly changeRoot: string;
-  readonly nextRecommended: string;
+  readonly nextRecommended: GentleNextRecommended;
   readonly schemaName: "gentle-ai.sdd-status";
   readonly schemaVersion: 1;
 }
@@ -68,6 +85,9 @@ const rejected = () => new GentleStatusRejected({ reason: "Gentle status contrac
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+const isNextRecommended = (value: unknown): value is GentleNextRecommended =>
+  typeof value === "string" && nextRecommendedTokens.some((token) => token === value);
+
 const isSddStatus = (value: unknown, request: GentleStatusRequest): value is SddStatus =>
   isRecord(value) &&
   value.schemaName === "gentle-ai.sdd-status" &&
@@ -75,9 +95,9 @@ const isSddStatus = (value: unknown, request: GentleStatusRequest): value is Sdd
   value.changeName === request.change &&
   value.artifactStore === "openspec" &&
   value.changeRoot === request.changeRoot &&
-  typeof value.nextRecommended === "string" &&
+  isNextRecommended(value.nextRecommended) &&
   Array.isArray(value.blockedReasons) &&
-  value.blockedReasons.every((reason) => typeof reason === "string") &&
+  value.blockedReasons.every((reason) => typeof reason === "string" && reason.length > 0) &&
   isRecord(value.artifactPaths) &&
   Array.isArray(value.artifactPaths.applyProgress) &&
   value.artifactPaths.applyProgress.every((path) => typeof path === "string" && path.length > 0) &&
@@ -176,6 +196,7 @@ export const readGentleStatus = (
 
     return {
       artifacts,
+      blocked: status.blockedReasons.length > 0,
       change: status.changeName,
       nextRecommended: status.nextRecommended,
       provenance: { contract, observedAt: dependencies.now().toISOString() },
