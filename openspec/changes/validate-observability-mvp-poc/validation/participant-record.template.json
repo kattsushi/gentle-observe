@@ -1,0 +1,22 @@
+{
+  "participantRef": "participant-AE01",
+  "sessionRef": "session-AE01",
+  "profile": "agent-engineer",
+  "exerciseVersion": "v1",
+  "tasks": [
+    {
+      "id": "AE-01",
+      "result": "not-attempted",
+      "assistance": "none",
+      "duration": "under-5m"
+    }
+  ],
+  "metrics": {
+    "comprehension": "unclear",
+    "navigation": "assisted",
+    "usefulness": "unclear",
+    "misleadingRisk": "possible"
+  },
+  "observationCodes": ["AE-NAV-COMPLETE"],
+  "payloadCapture": "none"
+}

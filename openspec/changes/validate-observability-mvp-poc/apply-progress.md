@@ -102,6 +102,15 @@ Line accounting: 122 changed lines (120 added, 2 deleted), below the 180-line PR
 
 PR1 is local-only at commit `271fa76f8132e3cd17838826f254667b2f9622e1`: no UI, Live, persistence, dependency, GitHub, staging, or further commit changes. Inclusive candidate is 326 lines.
 
+## Slice 4 / PR4 Demo Gate
+
+- [x] Compiled Linux x64 Complex `50x14` journey passed Runtime → Processes → generic Detail → SDD Detail → Timeline/back → natural `q`; fresh semantics reconstruct `reported` and unavailable timestamps, with no TERM/KILL, leak, or temp residue.
+- [x] Payload-free facilitator kit has separate AE/MT exercises, templates, exact-key validator, and truthful zero-user pending status; it contains no real records or fabricated outcomes.
+- [x] Strict RED found missing validation artifacts and compiled navigation helper; final Bun 1.3.14 configured app was 23 tests, full e2e 4, 59 unique tests/0 failures; typecheck/lint/format/quality/build/narrow `q` passed; app manifest script-only, root manifest/lock unchanged.
+- [x] Corrected integrity blockers: exact four tasks; no not-attempted eligibility; unique/same-profile/all-and-only decision refs; 3–5 records, distinct human owners, dual continue; metrics never decide.
+- [x] Corrected PTY redraw semantics and reduced candidate below cap; prior nonexistent Nx target was verifier procedural error, while the exact app-tui target passed.
+- [x] No Live/runtime/Termcn/dependency/PRD/Solid-recheck changes. Maintainer-approved 800-line exception applies to this slice.
+
 ## Maintainer-Approved UI Authority Amendment
 
 Stable immutable UI projections and component props remain the authority boundary; framework-local state may manage navigation/selection. PR2B admits the official Atom React dependency tuple but no runtime binding. Do not create an Atom-shaped abstraction; peer overrides, Solid, legacy/fallback, and unpublished packages remain forbidden.

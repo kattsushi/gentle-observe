@@ -1,0 +1,19 @@
+{
+  "participantCount": 0,
+  "profiles": {
+    "agent-engineer": false,
+    "maintainer": false
+  },
+  "decisions": {
+    "agent-engineer": "pending",
+    "maintainer": "pending"
+  },
+  "liveEligible": false,
+  "blockers": [
+    "participants-pending",
+    "agent-engineers-not-represented",
+    "maintainers-not-represented",
+    "agent-engineer-decision-pending",
+    "maintainer-decision-pending"
+  ]
+}
