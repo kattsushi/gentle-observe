@@ -43,6 +43,7 @@ const isSessionHeader = (
 ): value is {
   readonly cwd: string;
   readonly id: string;
+  readonly parentSession?: string;
   readonly timestamp: string;
   readonly type: "session";
   readonly version: 3;
@@ -53,12 +54,17 @@ const isSessionHeader = (
 
   const keys = Object.keys(value);
   return (
-    keys.length === 5 &&
-    keys.every((key) => ["cwd", "id", "timestamp", "type", "version"].includes(key)) &&
+    keys.length >= 5 &&
+    keys.length <= 6 &&
+    keys.every((key) =>
+      ["cwd", "id", "parentSession", "timestamp", "type", "version"].includes(key),
+    ) &&
     typeof value.cwd === "string" &&
     value.cwd.length > 0 &&
     typeof value.id === "string" &&
     value.id.length > 0 &&
+    (!("parentSession" in value) ||
+      (typeof value.parentSession === "string" && value.parentSession.length > 0)) &&
     isIsoTimestamp(value.timestamp) &&
     value.type === "session" &&
     value.version === 3

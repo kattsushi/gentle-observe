@@ -25,7 +25,7 @@ const piRequest = {
   sessionFile: "/pi/sessions/session-123.jsonl",
 } as const;
 
-const piSession = (header = sessionHeader) =>
+const piSession = (header: Record<string, unknown> = sessionHeader) =>
   [
     JSON.stringify(header),
     JSON.stringify({
@@ -77,12 +77,43 @@ describe("Pi persisted session metadata", () => {
     expect(JSON.stringify(outcome)).not.toContain("private reasoning");
   });
 
+  test("accepts an optional Pi fork parent session without exposing it", async () => {
+    const outcome = await execute(
+      readPiSession(
+        {
+          readText: () =>
+            Effect.succeed(piSession({ ...sessionHeader, parentSession: "parent-456" })),
+        },
+        piRequest,
+      ),
+    );
+
+    expect(outcome).toEqual({
+      result: "success",
+      value: {
+        cwd: "/workspace/repository",
+        latestEntry: {
+          timestamp: "2026-03-21T10:00:30.000Z",
+          type: "thinking_level_change",
+        },
+        sessionId: "session-123",
+      },
+    });
+    expect(JSON.stringify(outcome)).not.toContain("parent-456");
+  });
+
   test("rejects invalid Pi v3 headers and mismatched repository cwd exactly", async () => {
     const invalidHeader = piSession({ ...sessionHeader, version: 2 });
+    const nonStringParentSession = piSession({ ...sessionHeader, parentSession: 123 });
+    const emptyParentSession = piSession({ ...sessionHeader, parentSession: "" });
+    const unrelatedHeaderKey = piSession({ ...sessionHeader, unexpected: true });
     const mismatchedCwd = piSession({ ...sessionHeader, cwd: "/other/repository" });
 
     for (const [text, reason] of [
       [invalidHeader, "Pi session header is invalid"],
+      [nonStringParentSession, "Pi session header is invalid"],
+      [emptyParentSession, "Pi session header is invalid"],
+      [unrelatedHeaderKey, "Pi session header is invalid"],
       [mismatchedCwd, "Pi session cwd does not match repository"],
     ] as const) {
       const outcome = await execute(
