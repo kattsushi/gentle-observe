@@ -4,9 +4,14 @@ import { type DemoScenario, makeDemoLayer } from "../demo/layers";
 import { type GentleAIProcessProjection, type RuntimeAgentProjection } from "../domain/evidence";
 import { AgentTelemetrySource, GentleAIProcessSource } from "../sources/evidence-sources";
 import { unavailableLayer } from "../sources/unavailable";
+import { acquireLiveProjection, defaultLiveRuntimeOptions } from "../live/runtime";
+import { makeLiveSystemDependencies } from "../live/system";
 
 export interface ShellOptions {
+  readonly change?: string;
   readonly demo: boolean;
+  readonly live?: boolean;
+  readonly piSession?: string;
   readonly scenario: DemoScenario;
 }
 
@@ -23,7 +28,7 @@ const readSources = Effect.fn("GentleObserveUi.readSources")(function* () {
   return [yield* runtime.snapshot(), yield* processes.snapshot()] as const;
 });
 
-export const acquireProjection = (options: ShellOptions) =>
+const acquireStaticProjection = (options: ShellOptions) =>
   readSources().pipe(
     Effect.provide(options.demo ? makeDemoLayer(options.scenario) : unavailableLayer),
     Effect.map(([runtime, processes]): ShellProjection => ({
@@ -32,3 +37,15 @@ export const acquireProjection = (options: ShellOptions) =>
       runtime,
     })),
   );
+
+/** Chooses one source authority: Demo, explicitly requested Live, or unavailable by default. */
+export const acquireProjection = (options: ShellOptions) => {
+  if (options.demo) return acquireStaticProjection(options);
+  if (options.live && options.change !== undefined) {
+    return acquireLiveProjection(
+      makeLiveSystemDependencies(),
+      defaultLiveRuntimeOptions({ change: options.change, piSession: options.piSession }),
+    );
+  }
+  return acquireStaticProjection(options);
+};
