@@ -1,11 +1,13 @@
-import { RegistryProvider } from "@effect/atom-react";
+import { RegistryContext } from "@effect/atom-react";
 import { CliRenderEvents, createCliRenderer, type CliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
 import { Effect } from "effect";
 import * as Atom from "effect/unstable/reactivity/Atom";
+import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
 import type { ReactNode } from "react";
 
 import { App } from "./app";
+import { startLiveRefresh } from "./live/refresh";
 import { acquireProjection, type ShellOptions, type ShellProjection } from "./ui/projection";
 
 export interface OwnedRenderer {
@@ -19,16 +21,28 @@ export interface UiRoot {
   unmount(): void;
 }
 
+export interface RendererLifecycle {
+  readonly afterUnmount?: () => void;
+  readonly beforeUnmount?: () => void;
+}
+
 export const createRendererOwner = <R extends OwnedRenderer>(
   renderer: R,
   makeRoot: (renderer: R) => UiRoot,
+  lifecycle: RendererLifecycle = {},
 ) => {
   let root: UiRoot | undefined;
   let unmounted = false;
+  const isShutdown = () => unmounted || renderer.isDestroyed;
   const unmount = () => {
     if (unmounted) return;
     unmounted = true;
-    root?.unmount();
+    lifecycle.beforeUnmount?.();
+    try {
+      root?.unmount();
+    } finally {
+      lifecycle.afterUnmount?.();
+    }
   };
   renderer.once(CliRenderEvents.DESTROY, unmount);
 
@@ -53,10 +67,17 @@ export const createRendererOwner = <R extends OwnedRenderer>(
   };
 
   return {
+    isShutdown,
     render(node: ReactNode) {
+      if (isShutdown()) return;
       try {
-        root = makeRoot(renderer);
-        root.render(node);
+        const nextRoot = makeRoot(renderer);
+        root = nextRoot;
+        if (isShutdown()) {
+          nextRoot.unmount();
+          return;
+        }
+        nextRoot.render(node);
       } catch (cause) {
         shutdown();
         throw cause;
@@ -67,13 +88,14 @@ export const createRendererOwner = <R extends OwnedRenderer>(
 };
 
 export interface TuiDependencies<R extends OwnedRenderer> {
-  readonly acquire: (options: ShellOptions) => Promise<ShellProjection>;
+  readonly acquire: (options: ShellOptions, signal: AbortSignal) => Promise<ShellProjection>;
   readonly createRenderer: () => Promise<R>;
   readonly makeRoot: (renderer: R) => UiRoot;
+  readonly startLiveRefresh?: typeof startLiveRefresh;
 }
 
 const liveDependencies: TuiDependencies<CliRenderer> = {
-  acquire: (options) => Effect.runPromise(acquireProjection(options)),
+  acquire: (options, signal) => Effect.runPromise(acquireProjection(options), { signal }),
   createRenderer: () => createCliRenderer({ exitOnCtrlC: true }),
   makeRoot: createRoot,
 };
@@ -93,17 +115,63 @@ export const runTui = async <R extends OwnedRenderer>(
   dependencies: TuiDependencies<R>,
 ) => {
   const renderer = await dependencies.createRenderer();
-  const owner = createRendererOwner(renderer, dependencies.makeRoot);
+  const startupController = new AbortController();
+  const registry = AtomRegistry.make({ scheduleTask: scheduleAtomTask });
+  let cancelRefresh: (() => void) | undefined;
+  const owner = createRendererOwner(renderer, dependencies.makeRoot, {
+    afterUnmount: () => registry.dispose(),
+    beforeUnmount: () => {
+      startupController.abort();
+      cancelRefresh?.();
+      cancelRefresh = undefined;
+    },
+  });
+
+  if (owner.isShutdown()) {
+    owner.shutdown();
+    return;
+  }
+
+  let initialProjection: ShellProjection;
+  try {
+    initialProjection = await dependencies.acquire(options, startupController.signal);
+  } catch (cause) {
+    if (owner.isShutdown()) return;
+    owner.shutdown();
+    throw cause;
+  }
+
+  if (owner.isShutdown()) return;
 
   try {
-    const projection = Atom.make(await dependencies.acquire(options));
+    const projection = Atom.make(initialProjection);
     owner.render(
-      <RegistryProvider scheduleTask={scheduleAtomTask}>
+      <RegistryContext.Provider value={registry}>
         <App onQuit={owner.shutdown} projection={projection} />
-      </RegistryProvider>,
+      </RegistryContext.Provider>,
     );
+    if (owner.isShutdown() || !options.live || options.demo) return;
+
+    const cancel = (dependencies.startLiveRefresh ?? startLiveRefresh)({
+      acquire: (signal) => dependencies.acquire(options, signal),
+      clock: { now: () => Date.now() },
+      initialProjection,
+      intervalMs: 2_000,
+      onFailure: () => owner.shutdown(),
+      publish: (next) => {
+        if (!owner.isShutdown()) registry.set(projection, next);
+      },
+      scheduler: {
+        schedule: (at, task) => {
+          const timer = setTimeout(task, Math.max(0, at - Date.now()));
+          return () => clearTimeout(timer);
+        },
+      },
+    });
+    if (owner.isShutdown()) cancel();
+    else cancelRefresh = cancel;
   } catch (cause) {
-    owner.shutdown();
+    if (!owner.isShutdown()) owner.shutdown();
     throw cause;
   }
 };

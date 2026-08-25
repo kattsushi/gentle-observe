@@ -7,7 +7,7 @@
     "build": "sh scripts/verify-bun.sh && bun run build.ts",
     "e2e": "sh scripts/verify-bun.sh && bun test test/e2e.test.ts",
     "typecheck": "sh scripts/verify-bun.sh && tsc --noEmit -p tsconfig.json",
-    "test": "sh scripts/verify-bun.sh && bun test test/cli.test.ts test/app.test.tsx test/executable-pty.test.ts test/pi-session.test.ts test/gentle-status.test.ts test/live-system.test.ts test/live-layer.test.ts test/live-runtime.test.ts test/termcn-adoption.test.ts test/validation-artifacts.test.ts"
+    "test": "sh scripts/verify-bun.sh && bun test test/cli.test.ts test/app.test.tsx test/executable-pty.test.ts test/pi-session.test.ts test/gentle-status.test.ts test/live-system.test.ts test/live-layer.test.ts test/live-runtime.test.ts test/termcn-adoption.test.ts test/tui-lifecycle.test.tsx test/validation-artifacts.test.ts"
   },
   "dependencies": {
     "@effect/atom-react": "catalog:",
