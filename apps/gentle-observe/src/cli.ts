@@ -1,4 +1,4 @@
-import { Effect, Stdio, Stream } from "effect";
+import { Effect, Option, Stdio, Stream } from "effect";
 import { CliError, Command, Flag } from "effect/unstable/cli";
 
 import type { DemoScenario } from "./demo/layers";
@@ -10,7 +10,10 @@ const writeOutput = Effect.fn("GentleObserveCli.writeOutput")(function* (message
 });
 
 export interface RendererOptions {
+  readonly change?: string;
   readonly demo: boolean;
+  readonly live?: boolean;
+  readonly piSession?: string;
   readonly scenario: DemoScenario;
 }
 
@@ -41,6 +44,27 @@ const runCommand = Effect.fn("GentleObserveCli.runCommand")(function* (
     return yield* writeOutput(`gentle-observe ${version}\n`);
   }
 
+  if (options.demo && options.live) {
+    return yield* new CliError.UserError({
+      cause: "conflicting modes",
+      userMessage: "--demo and --live cannot be used together.",
+    });
+  }
+
+  if (options.live && options.change === undefined) {
+    return yield* new CliError.UserError({
+      cause: "live change required",
+      userMessage: "--live requires --change <name>.",
+    });
+  }
+
+  if (options.piSession !== undefined && !options.piSession.startsWith("/")) {
+    return yield* new CliError.UserError({
+      cause: "Pi session path is not absolute",
+      userMessage: "--pi-session must be an absolute path.",
+    });
+  }
+
   const stdinIsTerminal = yield* stdio.stdinIsTerminal;
   const stdoutIsTerminal = yield* stdio.stdoutIsTerminal;
 
@@ -51,20 +75,41 @@ const runCommand = Effect.fn("GentleObserveCli.runCommand")(function* (
     });
   }
 
-  return yield* startRenderer({ demo: options.demo, scenario: options.scenario });
+  return yield* startRenderer(
+    options.live
+      ? {
+          change: options.change,
+          demo: false,
+          live: true,
+          ...(options.piSession === undefined ? {} : { piSession: options.piSession }),
+          scenario: options.scenario,
+        }
+      : { demo: options.demo, scenario: options.scenario },
+  );
 });
 
 export const makeCommand = (startRenderer: StartRenderer = startInteractiveRenderer) =>
   Command.make(
     "gentle-observe",
     {
+      change: Flag.optional(Flag.string("change")),
       demo: Flag.boolean("demo"),
+      live: Flag.boolean("live"),
+      piSession: Flag.optional(Flag.string("pi-session")),
       scenario: Flag.choice("scenario", ["normal", "degraded", "complex"]).pipe(
         Flag.withDefault("normal"),
       ),
       version: Flag.boolean("version"),
     },
-    (options) => runCommand(options, startRenderer),
+    (options) =>
+      runCommand(
+        {
+          ...options,
+          change: Option.getOrUndefined(options.change),
+          piSession: Option.getOrUndefined(options.piSession),
+        },
+        startRenderer,
+      ),
   );
 
 export const command = makeCommand();

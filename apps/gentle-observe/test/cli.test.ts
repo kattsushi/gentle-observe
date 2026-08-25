@@ -100,4 +100,66 @@ describe("gentle-observe CLI", () => {
 
     expect(fixture.rendererOptions()).toEqual([{ demo: true, scenario: "degraded" }]);
   });
+
+  test("starts one-shot Live mode with its requested change", async () => {
+    const fixture = runCommand(["--live", "--change", "observe-live"]);
+
+    expect((await fixture.run())._tag).toBe("Success");
+
+    expect(fixture.rendererOptions()).toEqual([
+      { change: "observe-live", demo: false, live: true, scenario: "normal" },
+    ]);
+  });
+
+  test("forwards an optional absolute Pi session to Live mode", async () => {
+    const fixture = runCommand([
+      "--live",
+      "--change",
+      "observe-live",
+      "--pi-session",
+      "/sessions/observe-live.jsonl",
+    ]);
+
+    expect((await fixture.run())._tag).toBe("Success");
+
+    expect(fixture.rendererOptions()).toEqual([
+      {
+        change: "observe-live",
+        demo: false,
+        live: true,
+        piSession: "/sessions/observe-live.jsonl",
+        scenario: "normal",
+      },
+    ]);
+  });
+
+  test("rejects Demo and Live together without starting the renderer", async () => {
+    const fixture = runCommand(["--demo", "--live", "--change", "observe-live"]);
+
+    expect((await fixture.run())._tag).toBe("Failure");
+
+    expect(fixture.rendererOptions()).toEqual([]);
+  });
+
+  test("requires a change for Live mode before starting the renderer", async () => {
+    const fixture = runCommand(["--live"]);
+
+    expect((await fixture.run())._tag).toBe("Failure");
+
+    expect(fixture.rendererOptions()).toEqual([]);
+  });
+
+  test("requires an absolute Pi session path before starting the renderer", async () => {
+    const fixture = runCommand([
+      "--live",
+      "--change",
+      "observe-live",
+      "--pi-session",
+      "sessions/observe-live.jsonl",
+    ]);
+
+    expect((await fixture.run())._tag).toBe("Failure");
+
+    expect(fixture.rendererOptions()).toEqual([]);
+  });
 });
