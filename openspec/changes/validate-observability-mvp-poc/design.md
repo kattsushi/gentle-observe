@@ -2,7 +2,7 @@
 
 ## Technical Approach
 
-Extend the Effect CLI and current Solid/OpenTUI shell with separate runtime-agent and Gentle AI process planes. `--demo` selects deterministic Layers; default discovery reports unavailable, never fake fallback. PR2A may retain Solid as an intermediate local parent; the selected next child migrates the same shell boundary to React/OpenTUI. Decode, filter, and normalize providers before projection. Add no persistence, polling, replay, telemetry, or mutation authority.
+Extend the Effect CLI and current intermediate Solid/OpenTUI shell with separate runtime-agent and Gentle AI process planes. `--demo` selects deterministic Layers; default discovery reports unavailable, never fake fallback. PR2B admits the exact React dependency tuple without runtime changes; PR2C migrates the same shell boundary to React/OpenTUI; PR2D adds Overview/navigation. Decode, filter, and normalize providers before projection. Add no persistence, polling, replay, telemetry, or mutation authority.
 
 ## Architecture Decisions
 
@@ -12,9 +12,9 @@ Extend the Effect CLI and current Solid/OpenTUI shell with separate runtime-agen
 | Effect services/Layers    | Wiring cost; replaceable providers     | `AgentTelemetrySource` and `GentleAIProcessSource` expose health, capabilities, provenance, missingness, and records. Demo and conditional Live Layers share tags.                                                                                                                                        |
 | Adapter decoding          | Mapping duplication; stable UI         | Decode unknown records with Schema, deny RDD identifiers/classifications before process projection, and map metadata only. Payload bodies never enter normalized models.                                                                                                                                  |
 | Optional token experiment | Explicit unsupported states            | Model optional capability-bearing token metadata as supported/unsupported/missing; never model cost.                                                                                                                                                                                                      |
-| Reactivity authority      | Stable now; adapter later              | Treat the immutable UI projection and component props as the authority boundary now. Framework-local state may own navigation/selection only. Add the official Atom Solid adapter later, only after a published non-downgrade all-peer-compatible tuple exists; do not invent an Atom-shaped abstraction. |
+| Reactivity authority      | Stable projection; admitted adapter    | Treat immutable UI projection and component props as the authority boundary. The exact official Atom React tuple is admitted in PR2B without runtime use; adopt bindings only at a real reactive boundary and do not invent an Atom-shaped abstraction.                                      |
 | Tagged view state         | Sufficient TUI                         | Use Overview, AgentDetail, ProcessDetail, and Timeline tagged states with a back stack, not a router.                                                                                                                                                                                                     |
-| Primitive-first UI        | Portable                               | PR2A uses Solid/OpenTUI primitives; the selected next child migrates them to React/OpenTUI before Overview work. This does not complete or imply Atom compatibility. Termcn requires a later spike.                                                                                                       |
+| Primitive-first UI        | Portable                               | PR2A uses Solid/OpenTUI primitives; PR2B changes dependencies/guidance only; PR2C migrates to React/OpenTUI; PR2D adds Overview. Termcn requires a later React compatibility spike.                                                                                                                        |
 | Single app package        | Larger app; avoids premature graph     | Keep modules in `apps/gentle-observe`; split only for a second consumer. Direction: `ui -> projection -> contracts <- adapters`.                                                                                                                                                                          |
 
 ## Data Flow and Boundaries
@@ -24,11 +24,11 @@ CLI --demo? -> Layer composition -> source services -> safe projections -> immut
 Provider input -> decode -> RDD/privacy deny -> normalize ----------------------------------------^
 Framework-local navigation/selection state --------------------------------> route/selection props
 
-Later compatibility gate only:
-safe projections -> official Atom Solid adapter -> same immutable projection/props -> TUI
+When a real reactive boundary exists:
+safe projections -> official Atom React bindings -> same immutable projection/props -> TUI
 ```
 
-Sources report independent health/provenance, isolating failures. The stable immutable projection and props, not framework state, are the current UI authority. Local state may manage navigation/selection. The official adapter is deferred until its published peer tuple is safe; no peer override, downgrade, legacy/fallback, or unpublished package is permitted. Diagnostics retain operation/classification and adapter version. Missingness and `DEMO DATA` are textual. Parentage requires explicit evidence; process activity never implies liveness or hierarchy.
+Sources report independent health/provenance, isolating failures. The stable immutable projection and props, not framework state, are the current UI authority. Local state may manage navigation/selection. PR2B establishes the safe published Atom React tuple but no runtime use; no peer override, downgrade, Solid, legacy/fallback, or unpublished package is permitted. Diagnostics retain operation/classification and adapter version. Missingness and `DEMO DATA` are textual. Parentage requires explicit evidence; process activity never implies liveness or hierarchy.
 
 ## File Changes
 
@@ -78,4 +78,4 @@ Ship the Linux x64 demo to 3–5 users. Continue from both profiles makes Live e
 
 ## Open Questions
 
-- [ ] Later compatibility gate: adopt the official Atom Solid adapter only when a published non-downgrade all-peer-compatible tuple exists; no peer override, downgrade, legacy/fallback, or unpublished package.
+- [x] Dependency gate: admit the official Atom React package only in the exact published peer-compatible tuple; defer runtime bindings to a real reactive boundary and forbid peer overrides, Solid, legacy/fallback, or unpublished packages.

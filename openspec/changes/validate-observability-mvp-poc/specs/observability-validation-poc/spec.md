@@ -8,7 +8,7 @@ Validate metadata-only observability before resuming the preserved roadmap.
 
 ### Requirement: Normalized Evidence Layers
 
-The system MUST define separate normalized runtime-agent and Gentle AI process contracts. Deterministic Demo/Live Layers SHALL be replaceable. UI MUST consume only contracts; vocabulary/provenance stay separate. Effect Atom Solid, if used, MUST be reactive projection, never authority. RDD MUST be denied before projection.
+The system MUST define separate normalized runtime-agent and Gentle AI process contracts. Deterministic Demo/Live Layers SHALL be replaceable. UI MUST consume only contracts; vocabulary/provenance stay separate. Effect Atom React, if used, MUST bind reactive projection, never authority. RDD MUST be denied before projection.
 
 #### Scenario: Contract-only projection
 - GIVEN runtime/process evidence

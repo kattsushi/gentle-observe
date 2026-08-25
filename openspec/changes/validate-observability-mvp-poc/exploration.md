@@ -4,7 +4,7 @@
 
 `HEAD` is `3f402e3da8e3d60b82f9de0ccb10cd64c8fa8aa3`. The repository has an Nx/Bun workspace and an `app-tui` application that uses an Effect CLI/runtime boundary, Solid/OpenTUI static shell, a Linux x64 Bun build, and compiled-artifact PTY coverage for the truthful shell and `q` exit. The shell deliberately says that discovery is not connected.
 
-The product domain is not implemented: there are no normalized product contracts, Demo or Live Layers, deterministic fake evidence, Pi/Gentle AI adapters, Effect Atom Solid binding, Termcn integration, routes/screens, or history/persistence. The PRD and wireframes already describe the full roadmap, including §15's first slice, **Contract and synthetic evidence**.
+The product domain is not implemented: there are no normalized product contracts, Demo or Live Layers, deterministic fake evidence, Pi/Gentle AI adapters, Effect Atom React binding, Termcn integration, routes/screens, or history/persistence. The PRD and wireframes already describe the full roadmap, including §15's first slice, **Contract and synthetic evidence**.
 
 This change inserts an intermediate validation stage; it does not delete, supersede, or rewrite that roadmap. RDD remains out of product scope and disabled/unmanaged in this clone.
 
@@ -27,7 +27,7 @@ This change inserts an intermediate validation stage; it does not delete, supers
 
    Candidate validation slices, intentionally not implementation tasks:
    - **Stable contracts and Demo Layers:** normalized runtime/process inputs, explicit provenance/confidence/missingness, and deterministic fake fixtures behind replaceable Effect Layers. UI projections consume contracts, never Pi or Gentle AI records.
-   - **Convincing DEMO DATA TUI:** a visibly labeled synthetic shell, overview, timeline, agent, and process views using basic Solid/OpenTUI primitives. It must preserve separate runtime/process claims and avoid fabricated authority; Effect Atom Solid may own this reactive provider-to-view boundary only when it becomes useful, never authoritative domain storage. Termcn remains optional and non-blocking.
+   - **Convincing DEMO DATA TUI:** a visibly labeled synthetic shell, overview, timeline, agent, and process views using basic React/OpenTUI primitives. It must preserve separate runtime/process claims and avoid fabricated authority; Effect Atom React may bind this reactive provider-to-view boundary only when it becomes useful, never authoritative domain storage. Termcn remains optional and non-blocking.
    - **Validation gate:** test with 3–5 representative users. Continue when most participants can correctly distinguish runtime from process evidence, complete core overview-to-detail navigation, and identify the product as useful; pivot when comprehension or navigation is materially inconsistent but the job remains valuable; stop when users cannot identify a valuable job or the evidence model remains misleading despite POC correction. Record observed outcomes and the decision rather than treating synthetic usage as production telemetry.
    - **Conditional live-source pilot:** only after a continue decision, add one proven Pi capability and one compatible, non-RDD Gentle AI activity surface as narrow Live Layers while retaining the same source contracts and UI projections.
    - **Conditional pilot hardening/delivery:** only after positive fake-data validation, harden the limited pilot with focused evidence and bounded delivery. This is not authorization for persistence, broad coverage, or release expansion.
