@@ -2,8 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { Deferred, Effect, Fiber, Option } from "effect";
 import { TestClock } from "effect/testing";
 
+import { startLiveRefresh, type LiveRefreshScheduler } from "../src/live/refresh";
 import { acquireLiveProjection } from "../src/live/runtime";
 import type { LiveSubprocessOptions, LiveSystemDependencies } from "../src/live/system";
+import type { ShellProjection } from "../src/ui/projection";
 
 const repository = "/workspace/repository";
 const sessionRoot = "/pi/agent/sessions";
@@ -241,5 +243,208 @@ describe("live runtime acquisition", () => {
     expect(
       JSON.stringify({ processes: projection.processes, runtime: projection.runtime }),
     ).not.toContain("demo");
+  });
+});
+
+const refreshProjection = (health: "available" | "degraded"): ShellProjection => ({
+  demo: false,
+  processes: {
+    availability: health === "available" ? "available" : "unavailable",
+    capabilities: { tokens: { state: "missing" } },
+    freshness: "unknown",
+    health,
+    missingness: health === "available" ? "partial" : "complete",
+    provenance: { adapterVersion: "live-v1", kind: "live" },
+    records: [],
+  },
+  runtime: {
+    availability: "available",
+    capabilities: { tokens: { state: "missing" } },
+    freshness: "unknown",
+    health: "available",
+    missingness: "partial",
+    provenance: { adapterVersion: "live-v1", kind: "live" },
+    records: [],
+  },
+});
+
+const deferred = <A>() => {
+  let reject: (cause: unknown) => void = () => undefined;
+  let resolve: (value: A) => void = () => undefined;
+  const promise = new Promise<A>((resolve_, reject_) => {
+    resolve = resolve_;
+    reject = reject_;
+  });
+  return { promise, reject, resolve };
+};
+
+const refreshScheduler = () => {
+  const scheduled: Array<{ at: number; cancelled: boolean; task: () => void }> = [];
+  const scheduler: LiveRefreshScheduler = {
+    schedule(at, task) {
+      const entry = { at, cancelled: false, task };
+      scheduled.push(entry);
+      return () => {
+        entry.cancelled = true;
+      };
+    },
+  };
+  return { scheduled, scheduler };
+};
+
+const settle = async () => {
+  for (let index = 0; index < 4; index += 1) await Promise.resolve();
+};
+
+describe("live refresh", () => {
+  test("schedules the first acquisition and seeds unchanged suppression", async () => {
+    const initial = refreshProjection("available");
+    const gate = deferred<ShellProjection>();
+    const { scheduled, scheduler } = refreshScheduler();
+    const published: ShellProjection[] = [];
+    let acquisitions = 0;
+    let now = 100;
+    const cancel = startLiveRefresh({
+      acquire: () => {
+        acquisitions += 1;
+        return gate.promise;
+      },
+      clock: { now: () => now },
+      initialProjection: initial,
+      intervalMs: 25,
+      onFailure: () => undefined,
+      publish: (projection) => published.push(projection),
+      scheduler,
+    });
+
+    expect(acquisitions).toBe(0);
+    expect(scheduled[0]?.at).toBe(125);
+    scheduled[0]?.task();
+    expect(acquisitions).toBe(1);
+    now = 200;
+    gate.resolve(initial);
+    await settle();
+
+    expect(published).toEqual([]);
+    expect(scheduled[1]?.at).toBe(225);
+    cancel();
+    expect(scheduled[1]?.cancelled).toBe(true);
+  });
+
+  test("serializes work, publishes changes, and continues after unchanged projections", async () => {
+    const gates = Array.from({ length: 3 }, () => deferred<ShellProjection>());
+    const { scheduled, scheduler } = refreshScheduler();
+    const initial = refreshProjection("available");
+    const changed = refreshProjection("degraded");
+    const published: ShellProjection[] = [];
+    let acquisitions = 0;
+    const cancel = startLiveRefresh({
+      acquire: () => gates[acquisitions++]?.promise ?? Promise.reject(new Error("unexpected")),
+      clock: { now: () => 100 },
+      initialProjection: initial,
+      intervalMs: 25,
+      onFailure: () => undefined,
+      publish: (projection) => published.push(projection),
+      scheduler,
+    });
+
+    scheduled[0]?.task();
+    scheduled[0]?.task();
+    expect(acquisitions).toBe(1);
+    gates[0]?.resolve(changed);
+    await settle();
+    scheduled[1]?.task();
+    gates[1]?.resolve(changed);
+    await settle();
+    scheduled[2]?.task();
+    gates[2]?.resolve(initial);
+    await settle();
+
+    expect(published).toEqual([changed, initial]);
+    expect(scheduled).toHaveLength(4);
+    cancel();
+  });
+
+  test("aborts in-flight work and ignores cancellation-induced rejection", async () => {
+    const gate = deferred<ShellProjection>();
+    const { scheduled, scheduler } = refreshScheduler();
+    const failures: unknown[] = [];
+    const published: ShellProjection[] = [];
+    let aborted = false;
+    const cancel = startLiveRefresh({
+      acquire: (signal) => {
+        signal.addEventListener("abort", () => {
+          aborted = true;
+        });
+        return gate.promise;
+      },
+      clock: { now: () => 100 },
+      initialProjection: refreshProjection("available"),
+      intervalMs: 25,
+      onFailure: (cause) => failures.push(cause),
+      publish: (projection) => published.push(projection),
+      scheduler,
+    });
+
+    scheduled[0]?.task();
+    cancel();
+    cancel();
+    gate.reject(new Error("aborted"));
+    await settle();
+
+    expect(aborted).toBe(true);
+    expect(failures).toEqual([]);
+    expect(published).toEqual([]);
+    expect(scheduled).toHaveLength(1);
+  });
+
+  test("suppresses a successful publication after cancellation", async () => {
+    const gate = deferred<ShellProjection>();
+    const { scheduled, scheduler } = refreshScheduler();
+    const published: ShellProjection[] = [];
+    const cancel = startLiveRefresh({
+      acquire: () => gate.promise,
+      clock: { now: () => 100 },
+      initialProjection: refreshProjection("available"),
+      intervalMs: 25,
+      onFailure: () => undefined,
+      publish: (projection) => published.push(projection),
+      scheduler,
+    });
+
+    scheduled[0]?.task();
+    cancel();
+    gate.resolve(refreshProjection("degraded"));
+    await settle();
+
+    expect(published).toEqual([]);
+    expect(scheduled).toHaveLength(1);
+  });
+
+  test("reports one unexpected rejection and stops scheduling", async () => {
+    const { scheduled, scheduler } = refreshScheduler();
+    const failure = new Error("unexpected");
+    const failures: unknown[] = [];
+    let acquisitions = 0;
+    startLiveRefresh({
+      acquire: () => {
+        acquisitions += 1;
+        return Promise.reject(failure);
+      },
+      clock: { now: () => 100 },
+      initialProjection: refreshProjection("available"),
+      intervalMs: 25,
+      onFailure: (cause) => failures.push(cause),
+      publish: () => undefined,
+      scheduler,
+    });
+
+    scheduled[0]?.task();
+    await settle();
+    scheduled[0]?.task();
+
+    expect(acquisitions).toBe(1);
+    expect(failures).toEqual([failure]);
+    expect(scheduled).toHaveLength(1);
   });
 });
