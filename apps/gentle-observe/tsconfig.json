@@ -3,6 +3,9 @@
   "compilerOptions": {
     "module": "preserve",
     "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "noEmit": true,
     "resolveJsonModule": true,
     "jsx": "react-jsx",

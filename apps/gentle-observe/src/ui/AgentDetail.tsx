@@ -1,3 +1,5 @@
+import { KeyValue } from "@/components/ui/key-value";
+
 import type { ShellProjection } from "./projection";
 
 type Agent = ShellProjection["runtime"]["records"][number];
@@ -8,32 +10,60 @@ const tokenLabel = (tokens: ShellProjection["runtime"]["capabilities"]["tokens"]
     : `Token usage: ${tokens.state}`;
 
 export const AgentDetail = ({
+  compact,
   projection,
   record,
 }: {
+  readonly compact: boolean;
   readonly projection: ShellProjection;
   readonly record: Agent;
-}) => (
-  <>
-    <text>Agent Detail | {record.id}</text>
-    <text>
-      repo {record.repoId} | session {record.sessionId}
-    </text>
-    <text>
-      parent: {record.parentId ?? "none supplied"} | observed {record.status} | {record.durationMs}
-      ms
-    </text>
-    <text>
-      model: {record.model} | provider: {record.provider}
-    </text>
-    <text>
-      steps: {record.steps.map((step) => `${step.id} (${step.status})`).join(", ") || "none"}
-    </text>
-    <text>
-      Runtime source: {projection.runtime.freshness} | missing {projection.runtime.missingness} |
-      {` ${projection.runtime.provenance.kind}/${projection.runtime.provenance.adapterVersion}`}
-    </text>
-    <text>{tokenLabel(projection.runtime.capabilities.tokens)}</text>
-    <text>2 timeline | Esc back</text>
-  </>
-);
+}) =>
+  compact ? (
+    <>
+      <text>Agent Detail | {record.id}</text>
+      <text>
+        repo {record.repoId} | session {record.sessionId}
+      </text>
+      <text>
+        parent: {record.parentId ?? "none supplied"} | observed {record.status} |{" "}
+        {record.durationMs}
+        ms
+      </text>
+      <text>
+        model: {record.model} | provider: {record.provider}
+      </text>
+      <text>
+        steps: {record.steps.map((step) => `${step.id} (${step.status})`).join(", ") || "none"}
+      </text>
+      <text>
+        Runtime source: {projection.runtime.freshness} | missing {projection.runtime.missingness} |
+        {` ${projection.runtime.provenance.kind}/${projection.runtime.provenance.adapterVersion}`}
+      </text>
+      <text>{tokenLabel(projection.runtime.capabilities.tokens)}</text>
+      <text>2 timeline | Esc back</text>
+    </>
+  ) : (
+    <>
+      <text>Agent Detail | {record.id}</text>
+      <KeyValue
+        items={[
+          { key: "identity", value: `repo ${record.repoId} | session ${record.sessionId}` },
+          {
+            key: "parent/status",
+            value: `parent: ${record.parentId ?? "none supplied"} | observed ${record.status} | ${record.durationMs}ms`,
+          },
+          { key: "model", value: `${record.model} | provider: ${record.provider}` },
+          {
+            key: "steps",
+            value: record.steps.map((step) => `${step.id} (${step.status})`).join(", ") || "none",
+          },
+          {
+            key: "Runtime source",
+            value: `${projection.runtime.freshness} | missing ${projection.runtime.missingness} | ${projection.runtime.provenance.kind}/${projection.runtime.provenance.adapterVersion}`,
+          },
+        ]}
+      />
+      <text>{tokenLabel(projection.runtime.capabilities.tokens)}</text>
+      <text>2 timeline | Esc back</text>
+    </>
+  );

@@ -1,3 +1,5 @@
+import { KeyValue } from "@/components/ui/key-value";
+
 import type { ShellProjection } from "./projection";
 
 type Process = ShellProjection["processes"]["records"][number];
@@ -53,21 +55,23 @@ export const ProcessDetail = ({
   ) : (
     <>
       <text>Process Detail | {record.id}</text>
-      <text>
-        repo {record.repoId} | session {record.sessionId}
-      </text>
-      <text>
-        parent {record.parentId ?? "none supplied"} | reported {record.status} | {record.durationMs}
-        ms
-      </text>
-      <text>
-        activity {record.activity} | step{" "}
-        {record.steps.map((step) => `${step.id}:${step.status}`).join(", ") || "none"}
-      </text>
-      <text>
-        source {projection.processes.freshness}/{projection.processes.missingness}{" "}
-        {projection.processes.provenance.kind}/{projection.processes.provenance.adapterVersion}
-      </text>
+      <KeyValue
+        items={[
+          { key: "identity", value: `repo ${record.repoId} | session ${record.sessionId}` },
+          {
+            key: "parent/status",
+            value: `parent ${record.parentId ?? "none supplied"} | reported ${record.status} | ${record.durationMs}ms`,
+          },
+          {
+            key: "activity",
+            value: `${record.activity} | step ${record.steps.map((step) => `${step.id}:${step.status}`).join(", ") || "none"}`,
+          },
+          {
+            key: "source",
+            value: `${projection.processes.freshness}/${projection.processes.missingness} ${projection.processes.provenance.kind}/${projection.processes.provenance.adapterVersion}`,
+          },
+        ]}
+      />
       <text>{tokenLabel(projection.processes.capabilities.tokens)}</text>
       {record.type === "sdd" ? (
         <text>

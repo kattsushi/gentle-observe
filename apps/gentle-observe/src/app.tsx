@@ -33,6 +33,7 @@ const is = (key: { readonly name: string; readonly sequence: string }, value: st
 export const App = (props: AppProps) => {
   const projection = useAtomValue(props.projection);
   const { height, width } = useTerminalDimensions();
+  const compact = layoutFor(width, height).compact;
   const [plane, setPlane] = useState<OverviewPlane>("runtime");
   const [selection, setSelection] = useState<SelectionState>({
     processId: undefined,
@@ -129,20 +130,16 @@ export const App = (props: AppProps) => {
       : undefined;
 
   return (
-    <AppShell projection={projection}>
+    <AppShell compact={compact} projection={projection}>
       {view.tag === "AgentDetail" && agent !== undefined ? (
-        <AgentDetail projection={projection} record={agent} />
+        <AgentDetail compact={compact} projection={projection} record={agent} />
       ) : view.tag === "ProcessDetail" && process !== undefined ? (
-        <ProcessDetail
-          compact={layoutFor(width, height).compact}
-          projection={projection}
-          record={process}
-        />
+        <ProcessDetail compact={compact} projection={projection} record={process} />
       ) : view.tag === "Timeline" && timeline !== undefined ? (
-        <Timeline plane={view.plane} projection={projection} record={timeline} />
+        <Timeline compact={compact} plane={view.plane} projection={projection} record={timeline} />
       ) : (
         <Overview
-          compact={layoutFor(width, height).compact}
+          compact={compact}
           plane={plane}
           processId={selection.processId}
           projection={projection}

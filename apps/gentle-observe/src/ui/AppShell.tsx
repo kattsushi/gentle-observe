@@ -1,9 +1,13 @@
 import type { ReactNode } from "react";
 
+import { Columns } from "@/components/ui/columns";
+import { Stack } from "@/components/ui/stack";
+
 import type { ShellProjection } from "./projection";
 
 export interface AppShellProps {
   readonly children: ReactNode;
+  readonly compact: boolean;
   readonly projection: ShellProjection;
 }
 
@@ -12,11 +16,20 @@ const sourceLabel = (source: Pick<ShellProjection["runtime"], "health" | "proven
     source.provenance.kind === "unavailable" ? "source unavailable" : source.provenance.kind
   }`;
 
-export const AppShell = ({ children, projection }: AppShellProps) => (
-  <box flexDirection="column">
+export const AppShell = ({ children, compact, projection }: AppShellProps) => (
+  <Stack>
     {projection.demo ? <text>DEMO DATA</text> : undefined}
-    <text>Runtime: {sourceLabel(projection.runtime)}</text>
-    <text>Processes: {sourceLabel(projection.processes)} | q quit</text>
+    {compact ? (
+      <>
+        <text>Runtime: {sourceLabel(projection.runtime)}</text>
+        <text>Processes: {sourceLabel(projection.processes)} | q quit</text>
+      </>
+    ) : (
+      <Columns>
+        <text>Runtime: {sourceLabel(projection.runtime)}</text>
+        <text>Processes: {sourceLabel(projection.processes)} | q quit</text>
+      </Columns>
+    )}
     {children}
-  </box>
+  </Stack>
 );
