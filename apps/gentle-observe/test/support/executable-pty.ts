@@ -42,6 +42,10 @@ interface ProcessResult {
 }
 
 export interface ExecutableProof {
+  readonly demoPty: ProcessResult & {
+    readonly cleanup: CleanupEvidence;
+    readonly cwd: string;
+  };
   readonly nonTty: ProcessResult;
   readonly pty: ProcessResult & {
     readonly cleanup: CleanupEvidence;
@@ -317,6 +321,7 @@ const runPty = async (
   command: ReadonlyArray<string>,
   environment: IsolatedEnvironment,
   deadlineMs = defaultDeadlineMs,
+  readinessText = "Runtime: unavailable | source unavailable",
 ): Promise<ProcessResult & { readonly cleanup: CleanupEvidence; readonly cwd: string }> => {
   let capture = new Uint8Array();
   let readyOutput = "";
@@ -332,7 +337,7 @@ const runPty = async (
       data: (_terminal, data) => {
         capture = appendCapture(capture, data);
         const normalized = normalizeAnsi(textDecoder.decode(capture));
-        if (normalized.includes("Discovery is not connected.")) {
+        if (normalized.includes(readinessText)) {
           readyOutput = normalized;
           resolveReady?.();
         }
@@ -467,7 +472,13 @@ export const runExecutableProof = async ({ artifactPath }: { readonly artifactPa
     }
 
     const pty = await runPty([relocated], environment);
-    return { nonTty, pty, version } satisfies ExecutableProof;
+    const demoPty = await runPty(
+      [relocated, "--demo", "--scenario", "normal"],
+      environment,
+      defaultDeadlineMs,
+      "DEMO DATA",
+    );
+    return { demoPty, nonTty, pty, version } satisfies ExecutableProof;
   } finally {
     removeIsolatedEnvironment(environment);
   }

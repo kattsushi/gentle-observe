@@ -12,11 +12,17 @@ describe("compiled gentle-observe executable", () => {
     expect(result.nonTty.exitCode).toBe(1);
     expect(result.nonTty.output).toContain("requires an interactive terminal");
     expect(result.pty.cwd).not.toBe(import.meta.dir);
-    expect(result.pty.output).toContain("Discovery is not connected.");
+    expect(result.pty.output).toContain("Runtime: unavailable | source unavailable");
+    expect(result.pty.output).toContain("Processes: unavailable | source unavailable");
     expect(result.pty.output).toContain("q quit");
     expect(result.pty.output).not.toContain(String.fromCodePoint(27));
     expect(result.pty.exitCode).toBe(0);
     expect(result.pty.cleanup.terminalClosed).toBe(true);
+    expect(result.demoPty.output).toContain("DEMO DATA");
+    expect(result.demoPty.output).toContain("Runtime: available | demo");
+    expect(result.demoPty.output).toContain("Processes: available | demo");
+    expect(result.demoPty.exitCode).toBe(0);
+    expect(result.demoPty.cleanup.terminalClosed).toBe(true);
   });
 
   test("attributes missing executable assets before launching a PTY", async () => {

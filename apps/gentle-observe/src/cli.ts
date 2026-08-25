@@ -1,6 +1,7 @@
 import { Effect, Stdio, Stream } from "effect";
 import { CliError, Command, Flag } from "effect/unstable/cli";
 
+import type { DemoScenario } from "./demo/layers";
 import { version } from "./version";
 
 const writeOutput = Effect.fn("GentleObserveCli.writeOutput")(function* (message: string) {
@@ -8,21 +9,27 @@ const writeOutput = Effect.fn("GentleObserveCli.writeOutput")(function* (message
   yield* Stream.make(message).pipe(Stream.run(stdio.stdout()));
 });
 
-type StartRenderer = () => Effect.Effect<void, CliError.UserError>;
+export interface RendererOptions {
+  readonly demo: boolean;
+  readonly scenario: DemoScenario;
+}
 
-const startInteractiveRenderer = Effect.fn("GentleObserveCli.startRenderer")(() =>
-  Effect.tryPromise({
-    try: async () => (await import("./tui")).startTui(),
-    catch: (cause) =>
-      new CliError.UserError({
-        cause,
-        userMessage: "gentle-observe could not start the terminal renderer.",
-      }),
-  }),
+type StartRenderer = (options: RendererOptions) => Effect.Effect<void, CliError.UserError>;
+
+const startInteractiveRenderer = Effect.fn("GentleObserveCli.startRenderer")(
+  (options: RendererOptions) =>
+    Effect.tryPromise({
+      try: async () => (await import("./tui")).startTui(options),
+      catch: (cause) =>
+        new CliError.UserError({
+          cause,
+          userMessage: "gentle-observe could not start the terminal renderer.",
+        }),
+    }),
 );
 
 const runCommand = Effect.fn("GentleObserveCli.runCommand")(function* (
-  options: { readonly version: boolean },
+  options: RendererOptions & { readonly version: boolean },
   startRenderer: StartRenderer,
 ) {
   const stdio = yield* Stdio.Stdio;
@@ -41,12 +48,20 @@ const runCommand = Effect.fn("GentleObserveCli.runCommand")(function* (
     });
   }
 
-  return yield* startRenderer();
+  return yield* startRenderer({ demo: options.demo, scenario: options.scenario });
 });
 
 export const makeCommand = (startRenderer: StartRenderer = startInteractiveRenderer) =>
-  Command.make("gentle-observe", { version: Flag.boolean("version") }, (options) =>
-    runCommand(options, startRenderer),
+  Command.make(
+    "gentle-observe",
+    {
+      demo: Flag.boolean("demo"),
+      scenario: Flag.choice("scenario", ["normal", "degraded", "complex"]).pipe(
+        Flag.withDefault("normal"),
+      ),
+      version: Flag.boolean("version"),
+    },
+    (options) => runCommand(options, startRenderer),
   );
 
 export const command = makeCommand();

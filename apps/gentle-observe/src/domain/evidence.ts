@@ -9,7 +9,7 @@ const SourceHealth = Schema.Literals(["available", "degraded", "missing"]);
 const Freshness = Schema.Literals(["fresh", "stale", "unknown"]);
 const Provenance = Schema.Struct({
   adapterVersion: Schema.String,
-  kind: Schema.Literals(["demo", "live", "test"]),
+  kind: Schema.Literals(["demo", "live", "test", "unavailable"]),
 });
 const TokenUsage = Schema.Struct({
   inputTokens: Schema.optionalKey(Schema.Number),

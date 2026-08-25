@@ -7,7 +7,7 @@ import { makeCommand } from "../src/cli";
 import { version } from "../src/version";
 
 const runCommand = (args: string[], terminal = { stdinTTY: true, stdoutTTY: true }) => {
-  let rendererStarts = 0;
+  const rendererOptions: Array<unknown> = [];
   const output: string[] = [];
   const decodeMessage = (message: string | Uint8Array) =>
     typeof message === "string" ? message : new TextDecoder().decode(message);
@@ -21,7 +21,11 @@ const runCommand = (args: string[], terminal = { stdinTTY: true, stdoutTTY: true
         Effect.sync(() => output.push(decodeMessage(message))),
       ),
   });
-  const command = makeCommand(() => Effect.sync(() => (rendererStarts += 1)));
+  const command = makeCommand((options) =>
+    Effect.sync(() => {
+      rendererOptions.push(options);
+    }),
+  );
   const commandProgram = Command.runWith(command, { version, renderErrors: false })(args).pipe(
     Effect.provide(CliConfig.layer({ builtIns: [GlobalFlag.Help] })),
     Effect.provide(Layer.merge(BunServices.layer, stdioLayer)),
@@ -29,7 +33,7 @@ const runCommand = (args: string[], terminal = { stdinTTY: true, stdoutTTY: true
 
   return {
     output,
-    rendererStarts: () => rendererStarts,
+    rendererOptions: () => rendererOptions,
     run: () => Effect.runPromiseExit(commandProgram),
   };
 };
@@ -40,7 +44,7 @@ describe("gentle-observe CLI", () => {
 
     expect((await fixture.run())._tag).toBe("Success");
 
-    expect(fixture.rendererStarts()).toBe(0);
+    expect(fixture.rendererOptions()).toEqual([]);
   });
 
   test("prints the stable version without starting the renderer", async () => {
@@ -49,7 +53,7 @@ describe("gentle-observe CLI", () => {
     expect((await fixture.run())._tag).toBe("Success");
 
     expect(fixture.output).toEqual(["gentle-observe 0.1.0\n"]);
-    expect(fixture.rendererStarts()).toBe(0);
+    expect(fixture.rendererOptions()).toEqual([]);
   });
 
   test("attributes a mixed version invocation to its extra argument", async () => {
@@ -59,7 +63,7 @@ describe("gentle-observe CLI", () => {
     expect(exit._tag).toBe("Failure");
 
     expect(fixture.output).toEqual([]);
-    expect(fixture.rendererStarts()).toBe(0);
+    expect(fixture.rendererOptions()).toEqual([]);
   });
 
   test("rejects an unknown argument with usage without starting the renderer", async () => {
@@ -69,7 +73,7 @@ describe("gentle-observe CLI", () => {
     expect(exit._tag).toBe("Failure");
 
     expect(fixture.output).toEqual([]);
-    expect(fixture.rendererStarts()).toBe(0);
+    expect(fixture.rendererOptions()).toEqual([]);
   });
 
   test("rejects a non-TTY launch without starting the renderer", async () => {
@@ -78,14 +82,22 @@ describe("gentle-observe CLI", () => {
     expect((await fixture.run())._tag).toBe("Failure");
 
     expect(fixture.output).toEqual([]);
-    expect(fixture.rendererStarts()).toBe(0);
+    expect(fixture.rendererOptions()).toEqual([]);
   });
 
-  test("starts the renderer once for a TTY launch", async () => {
+  test("starts the unavailable renderer mode for a TTY launch", async () => {
     const fixture = runCommand([]);
 
     expect((await fixture.run())._tag).toBe("Success");
 
-    expect(fixture.rendererStarts()).toBe(1);
+    expect(fixture.rendererOptions()).toEqual([{ demo: false, scenario: "normal" }]);
+  });
+
+  test("forwards explicit demo mode and scenario to the renderer", async () => {
+    const fixture = runCommand(["--demo", "--scenario", "degraded"]);
+
+    expect((await fixture.run())._tag).toBe("Success");
+
+    expect(fixture.rendererOptions()).toEqual([{ demo: true, scenario: "degraded" }]);
   });
 });
